@@ -1,0 +1,51 @@
+{
+  "name": "ctxray",
+  "version": "1.0.0",
+  "description": "See what your repository costs an AI coding agent. Counts tokens, prices them across models, finds the context waste, and writes the ignore file that removes it.",
+  "keywords": [
+    "ai", "llm", "tokens", "token-counter", "context", "context-engineering",
+    "agents", "agentic", "claude", "gpt", "gemini", "cost", "cost-optimization",
+    "agentignore", "AGENTS.md", "cursor", "copilot", "developer-tools", "cli"
+  ],
+  "homepage": "https://github.com/geraltbhai/ctxray#readme",
+  "bugs": "https://github.com/geraltbhai/ctxray/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geraltbhai/ctxray.git"
+  },
+  "license": "MIT",
+  "author": "Samyak Vaghela (EigenSys) <samyak.m.vaghela@gmail.com>",
+  "type": "commonjs",
+  "bin": {
+    "ctxray": "bin/ctxray.js"
+  },
+  "main": "src/analyze.js",
+  "exports": {
+    ".": "./src/analyze.js",
+    "./tokenizer": "./src/tokenizer.js",
+    "./budget": "./src/budget.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE",
+    "!**/.fuse_hidden*",
+    "!**/.DS_Store",
+    "!**/*.test.js"
+  ],
+  "scripts": {
+    "test": "node test/run.js",
+    "calibrate": "node scripts/calibrate.js .",
+    "tune": "node scripts/tune.js .",
+    "demo": "node bin/ctxray.js ."
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "optionalDependencies": {},
+  "devDependencies": {},
+  "preferGlobal": true
+}
