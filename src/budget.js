@@ -1,0 +1,146 @@
+'use strict';
+/**
+ * `ctxray budget <N>` — the context packer.
+ *
+ * Question it answers: "I have 100k tokens of window. Which files do I put in
+ * it?" Naively you sort by size and take the small ones, which fills the window
+ * with config files. This ranks by *value per token* instead.
+ *
+ * Value heuristic, in order of weight:
+ *   - waste files score zero and are never selected
+ *   - files near the repo root and in conventional source directories score
+ *     higher than deep leaves
+ *   - entry points, manifests, and docs that describe the project score highest
+ *   - test files score lower than the code they test
+ *   - very large files are penalised because they crowd out breadth
+ *
+ * Selection is greedy by value density, which is the standard 1/2-approximation
+ * for the knapsack problem and is the right call here: the "value" numbers are
+ * heuristic anyway, so an exact solver would be false precision.
+ */
+
+const path = require('path');
+
+const HIGH_VALUE_NAMES = new Set([
+  'readme.md', 'readme.rst', 'readme.txt', 'agents.md', 'claude.md', 'contributing.md',
+  'architecture.md', 'design.md', 'package.json', 'pyproject.toml', 'cargo.toml',
+  'go.mod', 'tsconfig.json', 'makefile', 'justfile', 'docker-compose.yml', 'dockerfile',
+]);
+
+const ENTRY_NAMES = new Set([
+  'main.py', 'app.py', '__main__.py', 'manage.py', 'index.js', 'index.ts',
+  'main.js', 'main.ts', 'server.js', 'server.ts', 'main.go', 'main.rs', 'lib.rs',
+  'app.tsx', 'app.jsx', '__init__.py',
+]);
+
+const SOURCE_DIRS = new Set(['src', 'lib', 'app', 'pkg', 'internal', 'core', 'cmd', 'server', 'client', 'api', 'services', 'components', 'domain']);
+const TEST_HINT = /(^|\/)(tests?|spec|specs|__tests__|e2e)(\/|$)|\.(test|spec)\.[a-z]+$|^test_|_test\.[a-z]+$/i;
+const DOC_EXT = new Set(['.md', '.mdx', '.rst']);
+
+/**
+ * Score a file's usefulness to an agent trying to understand the project.
+ * @returns {number} arbitrary units, higher is better
+ */
+function valueOf(file) {
+  if (file.waste) return 0;
+
+  const base = path.posix.basename(file.path).toLowerCase();
+  const parts = file.path.split('/');
+  const depth = parts.length;
+  let v = 100;
+
+  if (HIGH_VALUE_NAMES.has(base)) v += 400;
+  if (ENTRY_NAMES.has(base)) v += 250;
+  if (depth === 1) v += 120;
+  else if (depth === 2) v += 60;
+  else v -= Math.min(60, (depth - 2) * 18);
+
+  for (const seg of parts.slice(0, -1)) {
+    if (SOURCE_DIRS.has(seg.toLowerCase())) { v += 80; break; }
+  }
+
+  if (TEST_HINT.test(file.path)) v -= 90;
+  // Dotfiles are tooling configuration; an agent almost never needs them to
+  // answer a question about the code.
+  if (base.startsWith('.') && !HIGH_VALUE_NAMES.has(base)) v -= 110;
+
+  const ext = path.posix.extname(base);
+  if (DOC_EXT.has(ext)) v += 60;
+  if (ext === '.json' || ext === '.yml' || ext === '.yaml') v -= 30;
+  if (ext === '.css' || ext === '.scss') v -= 40;
+
+  // Interfaces and types punch above their weight per token.
+  if (/\.(d\.ts|proto|graphql|pyi)$/.test(base)) v += 90;
+
+  // Enormous files crowd out breadth even when individually useful.
+  if (file.tokens > 20000) v -= 120;
+  else if (file.tokens > 8000) v -= 40;
+
+  return Math.max(1, v);
+}
+
+/**
+ * @param {object} report
+ * @param {number} budgetTokens
+ * @param {object} [opts]
+ * @param {number} [opts.reserve=0.15] fraction of the window left for the
+ *        conversation itself rather than the codebase
+ * @returns {{selected: object[], omitted: object[], usedTokens: number, budget: number, coverage: number}}
+ */
+function pack(report, budgetTokens, opts = {}) {
+  const reserve = opts.reserve === undefined ? 0.15 : opts.reserve;
+  const budget = Math.floor(budgetTokens * (1 - reserve));
+
+  const candidates = report.files
+    .filter((f) => !f.waste && f.tokens > 0)
+    .map((f) => ({ ...f, value: valueOf(f) }))
+    .filter((f) => f.value > 0);
+
+  // Greedy by value density, with a small-file tiebreak so cheap high-value
+  // files (READMEs, manifests) always make the cut.
+  candidates.sort((a, b) => (b.value / b.tokens) - (a.value / a.tokens) || a.tokens - b.tokens);
+
+  const selected = [];
+  const omitted = [];
+  let used = 0;
+  for (const f of candidates) {
+    if (used + f.tokens <= budget) {
+      selected.push(f);
+      used += f.tokens;
+    } else {
+      omitted.push(f);
+    }
+  }
+
+  selected.sort((a, b) => a.path.localeCompare(b.path));
+  omitted.sort((a, b) => b.value / b.tokens - a.value / a.tokens);
+
+  const totalSignal = report.totals.signalTokens || 1;
+  return {
+    selected,
+    omitted,
+    usedTokens: used,
+    budget,
+    rawBudget: budgetTokens,
+    reserve,
+    coverage: used / totalSignal,
+    fileCoverage: selected.length / (candidates.length || 1),
+  };
+}
+
+/** Render the packed selection as a file list suitable for piping. */
+function toList(result) {
+  return result.selected.map((f) => f.path).join('\n');
+}
+
+/** Render as a shell-friendly command that concatenates the selection. */
+function toConcatScript(result) {
+  const lines = ['#!/usr/bin/env bash', '# Generated by: ctxray budget', 'set -euo pipefail', ''];
+  for (const f of result.selected) {
+    lines.push(`echo "===== ${f.path} ====="`);
+    lines.push(`cat ${JSON.stringify(f.path)}`);
+  }
+  return lines.join('\n');
+}
+
+module.exports = { pack, valueOf, toList, toConcatScript };
