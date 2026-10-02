@@ -10,6 +10,10 @@ npx ctxray
 
 No install, no config, no dependencies, no network calls. Node 18+.
 
+> Not on npm yet? Run it straight from GitHub: `npx github:geraltbhai/ctxray`
+>
+> Built by [EigenSys](https://eigensys-website.vercel.app/), a small AI engineering studio. We build RAG systems, agents and evaluation harnesses for teams that need them to actually work.
+
 ---
 
 ```
