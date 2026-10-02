@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ctxray — demo-app</title>
+<style>
+:root{
+  --bg:#fbfbfd; --panel:#ffffff; --ink:#16161a; --muted:#6b6b78; --line:#e6e6ec;
+  --accent:#0090ff; --good:#46a758; --bad:#e5484d; --warn:#ffb224; --track:#ececeF;
+  --shadow:0 1px 2px rgba(16,16,24,.05),0 8px 24px rgba(16,16,24,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d0d11; --panel:#16161b; --ink:#f2f2f5; --muted:#9a9aa8; --line:#26262e;
+    --track:#26262e; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 16px;font-weight:600}
+.sub{color:var(--muted);font-size:13px;margin:0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
+
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:32px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;font-size:14px;color:var(--muted);margin-bottom:10px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.grade{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:14px 18px;box-shadow:var(--shadow)}
+.gradeletter{font-size:40px;font-weight:800;line-height:1;letter-spacing:-.04em}
+.gradetext{font-size:13px;color:var(--muted);max-width:230px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow);margin-bottom:20px}
+.kpi{padding:20px 22px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi .v{font-size:28px;font-weight:750;letter-spacing:-.03em;line-height:1.1}
+.kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:6px}
+@media(max-width:820px){.kpis{grid-template-columns:1fr 1fr}.kpi{border-bottom:1px solid var(--line)}}
+
+.split{height:34px;border-radius:8px;overflow:hidden;display:flex;margin:6px 0 12px}
+.split .s{background:var(--good)}
+.split .w{background:var(--bad)}
+.legend{display:flex;gap:22px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.legend b{color:var(--ink)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+  font-weight:600;padding:0 10px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vendor{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.good{color:var(--good)}.save{color:var(--good);font-weight:600}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.pill.ok{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:#a86800}
+.pill.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+@media (prefers-color-scheme:dark){.pill.warn{color:var(--warn)}}
+
+.barlist{display:flex;flex-direction:column;gap:9px}
+.barrow{display:grid;grid-template-columns:150px 1fr 62px 78px;align-items:center;gap:12px;font-size:13px}
+.barrow:has(.barmeta:empty){grid-template-columns:150px 1fr 62px}
+.barlabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.bartrack{background:var(--track);height:9px;border-radius:99px;overflow:hidden}
+.barfill{height:100%;border-radius:99px}
+.barvalue{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.barmeta{color:var(--muted);font-size:12px;text-align:right}
+@media(max-width:640px){.barrow{grid-template-columns:110px 1fr 56px}.barmeta{display:none}}
+
+.donutwrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.donut{width:200px;height:200px;flex:0 0 auto}
+.arc{transition:opacity .15s}
+.donut:hover .arc{opacity:.45}
+.donut .arc:hover{opacity:1}
+.donutlegend{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px;font-size:13px}
+.donutlegend div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.donutlegend span.nm{display:flex;align-items:center;min-width:0}
+.donutlegend b{font-variant-numeric:tabular-nums}
+
+.treemap{width:100%;height:auto;display:block;border-radius:10px}
+.tmlabel{font:600 11px ui-monospace,monospace;fill:var(--ink);pointer-events:none}
+.tmsub{font:400 10px ui-monospace,monospace;fill:var(--muted);pointer-events:none}
+.tmcell rect{transition:fill-opacity .12s;cursor:default}
+.tmcell:hover rect{fill-opacity:.95}
+
+.callout{border-left:3px solid var(--bad);background:color-mix(in srgb,var(--bad) 6%,transparent);
+  padding:16px 20px;border-radius:0 10px 10px 0;margin-bottom:20px}
+.callout .big{font-size:24px;font-weight:750;letter-spacing:-.02em}
+.callout.green{border-color:var(--good);background:color-mix(in srgb,var(--good) 7%,transparent)}
+
+.filter{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);
+  color:var(--ink);font-size:13px;margin-bottom:14px;font-family:inherit}
+.filter:focus{outline:2px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:1px;border-color:var(--accent)}
+.scroll{max-height:520px;overflow:auto;border-radius:10px}
+.flag{font-size:11px;color:var(--bad)}
+.path{font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all}
+.dim{color:var(--muted)}
+footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer a{color:var(--accent)}
+.cmd{background:var(--track);padding:2px 7px;border-radius:5px;font-family:ui-monospace,monospace;font-size:12.5px}
+ol.next{margin:0;padding-left:20px;line-height:2}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="brand"><span class="dot"></span> ctxray</div>
+    <h1>demo-app</h1>
+    <p class="sub mono">/tmp/demo-app</p>
+    <p class="sub">25 files · 1.3 MB · scanned 8/22/2026, 11:36:52 PM · ctxray estimator (~6% median error)</p>
+    <p class="sub">2 binary files (410 KB) counted as zero tokens — agents skip them.</p>
+  </div>
+  <div class="grade">
+    <div class="gradeletter" style="color:#e5484d">F</div>
+    <div class="gradetext">Severe. The agent is mostly reading noise.</div>
+  </div>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">312k</div><div class="k">Tokens in repo</div></div>
+  <div class="kpi"><div class="v" style="color:var(--bad)">94%</div><div class="k">Is waste</div></div>
+  <div class="kpi"><div class="v" style="color:var(--good)">274k</div><div class="k">Reclaimable</div></div>
+  <div class="kpi"><div class="v">$1.56</div><div class="k">Per full pass · Claude Opus 5</div></div>
+</div>
+
+<div class="panel">
+  <h2>Signal vs. waste</h2>
+  <div class="split">
+    <div class="s" style="width:6.41%"></div>
+    <div class="w" style="width:93.59%"></div>
+  </div>
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--good)"></i><b>20k</b> signal — 10 files</span>
+    <span><i class="swatch" style="background:var(--bad)"></i><b>292k</b> waste — 15 files</span>
+    <span><b>5.4k</b> tokens are duplicate content</span>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="big">$1751 / month burned on tokens the agent cannot use</div>
+  <div class="sub" style="margin-top:6px">Assuming 40 full-context Claude Opus 5 calls per day at $5.00/M input tokens.
+  That is $58.37/day and $21304/year, before output tokens.</div>
+</div>
+
+<div class="panel">
+  <h2>Cost per full-context pass</h2>
+  <table>
+    <thead><tr><th>Model</th><th class="n">As-is</th><th class="n">After cleanup</th><th class="n">Saved</th><th class="n">Window fit</th></tr></thead>
+    <tbody><tr>
+      <td><strong>Claude Opus 5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$1.56</td>
+      <td class="n good">$0.100</td>
+      <td class="n save">−$1.46</td>
+      <td class="n"><span class="pill bad">1.6× over</span></td>
+    </tr><tr>
+      <td><strong>Claude Sonnet 5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$0.935</td>
+      <td class="n good">$0.060</td>
+      <td class="n save">−$0.876</td>
+      <td class="n"><span class="pill bad">1.6× over</span></td>
+    </tr><tr>
+      <td><strong>Claude Haiku 4.5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$0.312</td>
+      <td class="n good">$0.020</td>
+      <td class="n save">−$0.292</td>
+      <td class="n"><span class="pill bad">1.6× over</span></td>
+    </tr><tr>
+      <td><strong>GPT-5 class</strong><span class="vendor">OpenAI</span></td>
+      <td class="n">$1.56</td>
+      <td class="n good">$0.100</td>
+      <td class="n save">−$1.46</td>
+      <td class="n"><span class="pill warn">78% of window</span></td>
+    </tr><tr>
+      <td><strong>Gemini 3.x Pro</strong><span class="vendor">Google</span></td>
+      <td class="n">$0.624</td>
+      <td class="n good">$0.040</td>
+      <td class="n save">−$0.584</td>
+      <td class="n"><span class="pill ok">31% of window</span></td>
+    </tr></tbody>
+  </table>
+  <p class="sub" style="margin-top:14px">Input-token prices checked 2026-08-22. Override with <span class="cmd">--pricing models.json</span>.</p>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>Waste by category</h2>
+    <div class="donutwrap">
+      <svg viewBox="0 0 220 220" class="donut" role="img" aria-label="Waste by category">
+    <circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#e5484d" stroke-width="30"
+        stroke-dasharray="158.53 356.70"
+        stroke-dashoffset="0.00"
+        transform="rotate(-90 110 110)"><title>Bulk data: 96k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#f76b15" stroke-width="30"
+        stroke-dasharray="130.39 384.83"
+        stroke-dashoffset="-158.53"
+        transform="rotate(-90 110 110)"><title>Lockfiles: 79k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#ffb224" stroke-width="30"
+        stroke-dasharray="62.46 452.76"
+        stroke-dashoffset="-288.92"
+        transform="rotate(-90 110 110)"><title>Test fixtures &amp; snapshots: 38k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#46a758" stroke-width="30"
+        stroke-dasharray="46.40 468.82"
+        stroke-dashoffset="-351.38"
+        transform="rotate(-90 110 110)"><title>Minified bundles: 28k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#0090ff" stroke-width="30"
+        stroke-dasharray="39.51 475.71"
+        stroke-dashoffset="-397.78"
+        transform="rotate(-90 110 110)"><title>Build output: 24k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#8e4ec6" stroke-width="30"
+        stroke-dasharray="21.72 493.50"
+        stroke-dashoffset="-437.30"
+        transform="rotate(-90 110 110)"><title>Generated code: 13k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#d6409f" stroke-width="30"
+        stroke-dasharray="14.24 500.98"
+        stroke-dashoffset="-459.02"
+        transform="rotate(-90 110 110)"><title>Doc archives: 8.6k tokens</title></circle>
+<circle class="arc" cx="110" cy="110" r="82" fill="none"
+        stroke="#12a594" stroke-width="30"
+        stroke-dasharray="8.94 506.28"
+        stroke-dashoffset="-473.26"
+        transform="rotate(-90 110 110)"><title>Duplicate content: 5.4k tokens</title></circle>
+<circle cx="110" cy="110" r="82" fill="none" stroke="var(--track)" stroke-width="30"
+        stroke-dasharray="33.02 482.20"
+        stroke-dashoffset="-482.20" transform="rotate(-90 110 110)"></circle>
+  </svg>
+      <div class="donutlegend">
+        <div>
+          <span class="nm"><i class="swatch" style="background:#e5484d"></i>Bulk data</span>
+          <b>96k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#f76b15"></i>Lockfiles</span>
+          <b>79k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#ffb224"></i>Test fixtures &amp; snapshots</span>
+          <b>38k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#46a758"></i>Minified bundles</span>
+          <b>28k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#0090ff"></i>Build output</span>
+          <b>24k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#8e4ec6"></i>Generated code</span>
+          <b>13k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#d6409f"></i>Doc archives</span>
+          <b>8.6k</b></div><div>
+          <span class="nm"><i class="swatch" style="background:#12a594"></i>Duplicate content</span>
+          <b>5.4k</b></div>
+        <div><span class="nm"><i class="swatch" style="background:var(--track)"></i>Signal</span><b>20k</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Heaviest directories</h2>
+    <div class="barlist">
+    <div class="barrow">
+      <div class="barlabel" title="data">data</div>
+      <div class="bartrack"><div class="barfill" style="width:100.0%;background:#e5484d"></div></div>
+      <div class="barvalue">96k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title=".">.</div>
+      <div class="bartrack"><div class="barfill" style="width:91.6%;background:#e5484d"></div></div>
+      <div class="barvalue">88k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="assets">assets</div>
+      <div class="bartrack"><div class="barfill" style="width:29.3%;background:#e5484d"></div></div>
+      <div class="barvalue">28k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="tests/fixtures">tests/fixtures</div>
+      <div class="bartrack"><div class="barfill" style="width:26.9%;background:#e5484d"></div></div>
+      <div class="barvalue">26k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="dist">dist</div>
+      <div class="bartrack"><div class="barfill" style="width:24.9%;background:#e5484d"></div></div>
+      <div class="barvalue">24k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="tests/__snapshots__">tests/__snapshots__</div>
+      <div class="bartrack"><div class="barfill" style="width:12.5%;background:#e5484d"></div></div>
+      <div class="barvalue">12k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="src/routes">src/routes</div>
+      <div class="bartrack"><div class="barfill" style="width:12.5%;background:#0090ff"></div></div>
+      <div class="barvalue">12k</div>
+      <div class="barmeta">23% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="src/generated">src/generated</div>
+      <div class="bartrack"><div class="barfill" style="width:7.2%;background:#e5484d"></div></div>
+      <div class="barvalue">6.9k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="src/lib">src/lib</div>
+      <div class="bartrack"><div class="barfill" style="width:6.6%;background:#0090ff"></div></div>
+      <div class="barvalue">6.3k</div>
+      <div class="barmeta">43% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="src/types">src/types</div>
+      <div class="bartrack"><div class="barfill" style="width:6.5%;background:#e5484d"></div></div>
+      <div class="barvalue">6.2k</div>
+      <div class="barmeta">100% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="src">src</div>
+      <div class="bartrack"><div class="barfill" style="width:2.8%;background:#0090ff"></div></div>
+      <div class="barvalue">2.7k</div>
+      <div class="barmeta">0% waste</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="scripts">scripts</div>
+      <div class="bartrack"><div class="barfill" style="width:2.8%;background:#0090ff"></div></div>
+      <div class="barvalue">2.7k</div>
+      <div class="barmeta">0% waste</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Where the tokens live</h2>
+  <svg viewBox="0 0 720 260" class="treemap" role="img" aria-label="Heaviest files"><g class="tmcell"><rect x="0.0" y="0.0" width="219.5" height="258.0"
+      fill="#e5484d" fill-opacity="0.85" rx="3"><title>data/customers.csv
+96k tokens — Bulk data file (219 KB) — send a schema and 3 sample rows instead</title></rect>
+      <text x="6.0" y="16.0" class="tmlabel">customers.csv</text>
+      <text x="6.0" y="30.0" class="tmsub">96k</text>
+    </g><g class="tmcell"><rect x="221.5" y="0.0" width="496.5" height="93.0"
+      fill="#e5484d" fill-opacity="0.74" rx="3"><title>package-lock.json
+79k tokens — Dependency lockfile — huge, and the manifest says the same thing</title></rect>
+      <text x="227.5" y="16.0" class="tmlabel">package-lock.json</text>
+      <text x="227.5" y="30.0" class="tmsub">79k</text>
+    </g><g class="tmcell"><rect x="221.5" y="95.0" width="100.2" height="163.0"
+      fill="#e5484d" fill-opacity="0.43" rx="3"><title>assets/map.svg
+28k tokens — Minified or single-line generated file</title></rect>
+      <text x="227.5" y="111.0" class="tmlabel">map.svg</text>
+      <text x="227.5" y="125.0" class="tmsub">28k</text>
+    </g><g class="tmcell"><rect x="323.7" y="95.0" width="394.3" height="37.0"
+      fill="#e5484d" fill-opacity="0.41" rx="3"><title>tests/fixtures/sample-response.json
+26k tokens — Test fixture/snapshot under fixtures/ — high volume, low signal</title></rect>
+      <text x="329.7" y="111.0" class="tmlabel">sample-response.json</text>
+      <text x="329.7" y="125.0" class="tmsub">26k</text>
+    </g><g class="tmcell"><rect x="323.7" y="134.1" width="55.4" height="123.9"
+      fill="#e5484d" fill-opacity="0.33" rx="3"><title>tests/__snapshots__/users.test.js.snap
+12k tokens — Test fixture/snapshot under __snapshots__/ — high volume, low signal</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="381.1" y="134.1" width="336.9" height="16.6"
+      fill="#e5484d" fill-opacity="0.32" rx="3"><title>dist/bundle.js
+11k tokens — Build artifact under dist/ — regenerated from source</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="381.1" y="152.7" width="54.2" height="105.3"
+      fill="#e5484d" fill-opacity="0.31" rx="3"><title>dist/vendor.min.js
+10k tokens — Build artifact under dist/ — regenerated from source</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="437.3" y="152.7" width="280.7" height="16.3"
+      fill="#e5484d" fill-opacity="0.30" rx="3"><title>CHANGELOG.md
+8.6k tokens — Long changelog (26 KB) — history an agent rarely needs</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="437.3" y="171.0" width="44.8" height="87.0"
+      fill="#e5484d" fill-opacity="0.29" rx="3"><title>src/generated/api_pb2.py
+6.9k tokens — Declares itself auto-generated — regenerate, do not read</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="484.1" y="171.0" width="233.9" height="13.8"
+      fill="#e5484d" fill-opacity="0.29" rx="3"><title>src/types/schema.generated.ts
+6.2k tokens — Declares itself auto-generated — regenerate, do not read</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="484.1" y="186.9" width="38.3" height="71.1"
+      fill="#0090ff" fill-opacity="0.28" rx="3"><title>src/routes/users.js
+4.9k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="524.4" y="186.9" width="193.6" height="11.5"
+      fill="#0090ff" fill-opacity="0.28" rx="3"><title>src/routes/orders.js
+4.4k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="524.4" y="200.3" width="31.8" height="57.7"
+      fill="#e5484d" fill-opacity="0.27" rx="3"><title>dist/bundle.js.map
+3.4k tokens — Build artifact under dist/ — regenerated from source</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="558.1" y="200.3" width="159.9" height="8.1"
+      fill="#0090ff" fill-opacity="0.27" rx="3"><title>src/index.js
+2.7k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="558.1" y="210.4" width="30.8" height="47.6"
+      fill="#0090ff" fill-opacity="0.27" rx="3"><title>scripts/format.js
+2.7k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="590.9" y="210.4" width="127.1" height="10.6"
+      fill="#e5484d" fill-opacity="0.27" rx="3"><title>src/lib/format.js
+2.7k tokens — Byte-identical to scripts/format.js</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="590.9" y="223.0" width="41.9" height="35.0"
+      fill="#e5484d" fill-opacity="0.27" rx="3"><title>src/routes/format.js
+2.7k tokens — Byte-identical to scripts/format.js</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="634.8" y="223.0" width="83.2" height="12.0"
+      fill="#0090ff" fill-opacity="0.26" rx="3"><title>src/lib/db.js
+2.0k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="634.8" y="237.0" width="41.1" height="21.0"
+      fill="#0090ff" fill-opacity="0.26" rx="3"><title>src/lib/auth.js
+1.7k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="677.9" y="237.0" width="40.1" height="16.0"
+      fill="#0090ff" fill-opacity="0.26" rx="3"><title>tests/users.test.js
+1.3k tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="677.9" y="255.0" width="28.5" height="3.0"
+      fill="#0090ff" fill-opacity="0.25" rx="3"><title>README.md
+255 tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="708.4" y="255.0" width="9.6" height="2.4"
+      fill="#0090ff" fill-opacity="0.25" rx="3"><title>package.json
+85 tokens</title></rect>
+      
+      
+    </g><g class="tmcell"><rect x="708.4" y="259.4" width="9.6" height="0.0"
+      fill="#0090ff" fill-opacity="0.25" rx="3"><title>.gitignore
+12 tokens</title></rect>
+      
+      
+    </g></svg>
+  <p class="sub" style="margin-top:12px"><i class="swatch" style="background:#0090ff"></i>signal &nbsp;
+  <i class="swatch" style="background:#e5484d"></i>waste &nbsp; — area is proportional to token count. Hover for details.</p>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>By language</h2>
+    <div class="barlist">
+    <div class="barrow">
+      <div class="barlabel" title="JSON">JSON</div>
+      <div class="bartrack"><div class="barfill" style="width:100.0%;background:#46a758"></div></div>
+      <div class="barvalue">105k</div>
+      <div class="barmeta">3 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="CSV">CSV</div>
+      <div class="bartrack"><div class="barfill" style="width:91.6%;background:#0090ff"></div></div>
+      <div class="barvalue">96k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="JavaScript">JavaScript</div>
+      <div class="bartrack"><div class="barfill" style="width:43.5%;background:#8e4ec6"></div></div>
+      <div class="barvalue">46k</div>
+      <div class="barmeta">11 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="SVG">SVG</div>
+      <div class="bartrack"><div class="barfill" style="width:26.8%;background:#d6409f"></div></div>
+      <div class="barvalue">28k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="SNAP">SNAP</div>
+      <div class="bartrack"><div class="barfill" style="width:11.5%;background:#12a594"></div></div>
+      <div class="barvalue">12k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="Markdown">Markdown</div>
+      <div class="bartrack"><div class="barfill" style="width:8.5%;background:#8da4ef"></div></div>
+      <div class="barvalue">8.9k</div>
+      <div class="barmeta">2 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="Python">Python</div>
+      <div class="bartrack"><div class="barfill" style="width:6.6%;background:#a18072"></div></div>
+      <div class="barvalue">6.9k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="TypeScript">TypeScript</div>
+      <div class="bartrack"><div class="barfill" style="width:5.9%;background:#e5484d"></div></div>
+      <div class="barvalue">6.2k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="MAP">MAP</div>
+      <div class="bartrack"><div class="barfill" style="width:3.2%;background:#f76b15"></div></div>
+      <div class="barvalue">3.4k</div>
+      <div class="barmeta">1 files</div>
+    </div>
+    <div class="barrow">
+      <div class="barlabel" title="Other">Other</div>
+      <div class="bartrack"><div class="barfill" style="width:0.0%;background:#ffb224"></div></div>
+      <div class="barvalue">12</div>
+      <div class="barmeta">1 files</div>
+    </div></div>
+  </div>
+  <div class="panel">
+    <h2>Worst individual offenders</h2>
+    <table>
+      <tbody>
+      <tr>
+        <td class="path">data/customers.csv<div class="flag">Bulk data file (219 KB) — send a schema and 3 sample rows instead</div></td>
+        <td class="n"><strong>96k</strong><div class="dim" style="font-size:11px">$0.480</div></td>
+      </tr><tr>
+        <td class="path">package-lock.json<div class="flag">Dependency lockfile — huge, and the manifest says the same thing</div></td>
+        <td class="n"><strong>79k</strong><div class="dim" style="font-size:11px">$0.395</div></td>
+      </tr><tr>
+        <td class="path">assets/map.svg<div class="flag">Minified or single-line generated file</div></td>
+        <td class="n"><strong>28k</strong><div class="dim" style="font-size:11px">$0.140</div></td>
+      </tr><tr>
+        <td class="path">tests/fixtures/sample-response.json<div class="flag">Test fixture/snapshot under fixtures/ — high volume, low signal</div></td>
+        <td class="n"><strong>26k</strong><div class="dim" style="font-size:11px">$0.129</div></td>
+      </tr><tr>
+        <td class="path">tests/__snapshots__/users.test.js.snap<div class="flag">Test fixture/snapshot under __snapshots__/ — high volume, low signal</div></td>
+        <td class="n"><strong>12k</strong><div class="dim" style="font-size:11px">$0.060</div></td>
+      </tr><tr>
+        <td class="path">dist/bundle.js<div class="flag">Build artifact under dist/ — regenerated from source</div></td>
+        <td class="n"><strong>11k</strong><div class="dim" style="font-size:11px">$0.053</div></td>
+      </tr><tr>
+        <td class="path">dist/vendor.min.js<div class="flag">Build artifact under dist/ — regenerated from source</div></td>
+        <td class="n"><strong>10k</strong><div class="dim" style="font-size:11px">$0.050</div></td>
+      </tr><tr>
+        <td class="path">CHANGELOG.md<div class="flag">Long changelog (26 KB) — history an agent rarely needs</div></td>
+        <td class="n"><strong>8.6k</strong><div class="dim" style="font-size:11px">$0.043</div></td>
+      </tr><tr>
+        <td class="path">src/generated/api_pb2.py<div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
+        <td class="n"><strong>6.9k</strong><div class="dim" style="font-size:11px">$0.035</div></td>
+      </tr><tr>
+        <td class="path">src/types/schema.generated.ts<div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
+        <td class="n"><strong>6.2k</strong><div class="dim" style="font-size:11px">$0.031</div></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Duplicate content — 5.4k tokens paid for more than once</h2>
+  <table>
+    <thead><tr><th>Content</th><th class="n">Copies</th><th class="n">Wasted</th></tr></thead>
+    <tbody><tr>
+      <td class="path">scripts/format.js<div class="dim" style="font-size:11.5px">src/lib/format.js · src/routes/format.js</div></td>
+      <td class="n">3</td><td class="n">5.4k</td></tr></tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Every file</h2>
+  <input class="filter" id="q" placeholder="Filter by path, language, or reason…" autocomplete="off">
+  <div class="scroll">
+  <table id="files">
+    <thead><tr><th>Path</th><th>Language</th><th class="n">Tokens</th><th class="n">Size</th><th>Status</th></tr></thead>
+    <tbody>
+    <tr data-s="data/customers.csv csv bulk data file (219 kb) — send a schema and 3 sample rows instead">
+      <td class="path">data/customers.csv</td>
+      <td class="dim">CSV</td>
+      <td class="n">95,944</td>
+      <td class="n dim">219 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Bulk data file (219 KB) — send a schema and 3 sample rows instead</div></td>
+    </tr><tr data-s="package-lock.json json dependency lockfile — huge, and the manifest says the same thing">
+      <td class="path">package-lock.json</td>
+      <td class="dim">JSON</td>
+      <td class="n">78,916</td>
+      <td class="n dim">273 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Dependency lockfile — huge, and the manifest says the same thing</div></td>
+    </tr><tr data-s="assets/map.svg svg minified or single-line generated file">
+      <td class="path">assets/map.svg</td>
+      <td class="dim">SVG</td>
+      <td class="n">28,083</td>
+      <td class="n dim">61 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Minified or single-line generated file</div></td>
+    </tr><tr data-s="tests/fixtures/sample-response.json json test fixture/snapshot under fixtures/ — high volume, low signal">
+      <td class="path">tests/fixtures/sample-response.json</td>
+      <td class="dim">JSON</td>
+      <td class="n">25,765</td>
+      <td class="n dim">62 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Test fixture/snapshot under fixtures/ — high volume, low signal</div></td>
+    </tr><tr data-s="tests/__snapshots__/users.test.js.snap snap test fixture/snapshot under __snapshots__/ — high volume, low signal">
+      <td class="path">tests/__snapshots__/users.test.js.snap</td>
+      <td class="dim">SNAP</td>
+      <td class="n">12,040</td>
+      <td class="n dim">33 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Test fixture/snapshot under __snapshots__/ — high volume, low signal</div></td>
+    </tr><tr data-s="dist/bundle.js javascript build artifact under dist/ — regenerated from source">
+      <td class="path">dist/bundle.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">10,524</td>
+      <td class="n dim">26 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Build artifact under dist/ — regenerated from source</div></td>
+    </tr><tr data-s="dist/vendor.min.js javascript build artifact under dist/ — regenerated from source">
+      <td class="path">dist/vendor.min.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">10,035</td>
+      <td class="n dim">59 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Build artifact under dist/ — regenerated from source</div></td>
+    </tr><tr data-s="changelog.md markdown long changelog (26 kb) — history an agent rarely needs">
+      <td class="path">CHANGELOG.md</td>
+      <td class="dim">Markdown</td>
+      <td class="n">8,621</td>
+      <td class="n dim">26 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Long changelog (26 KB) — history an agent rarely needs</div></td>
+    </tr><tr data-s="src/generated/api_pb2.py python declares itself auto-generated — regenerate, do not read">
+      <td class="path">src/generated/api_pb2.py</td>
+      <td class="dim">Python</td>
+      <td class="n">6,930</td>
+      <td class="n dim">19 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
+    </tr><tr data-s="src/types/schema.generated.ts typescript declares itself auto-generated — regenerate, do not read">
+      <td class="path">src/types/schema.generated.ts</td>
+      <td class="dim">TypeScript</td>
+      <td class="n">6,218</td>
+      <td class="n dim">18 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
+    </tr><tr data-s="src/routes/users.js javascript signal">
+      <td class="path">src/routes/users.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">4,911</td>
+      <td class="n dim">15 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="src/routes/orders.js javascript signal">
+      <td class="path">src/routes/orders.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">4,390</td>
+      <td class="n dim">14 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="dist/bundle.js.map map build artifact under dist/ — regenerated from source">
+      <td class="path">dist/bundle.js.map</td>
+      <td class="dim">MAP</td>
+      <td class="n">3,356</td>
+      <td class="n dim">20 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Build artifact under dist/ — regenerated from source</div></td>
+    </tr><tr data-s="src/index.js javascript signal">
+      <td class="path">src/index.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">2,726</td>
+      <td class="n dim">8 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="scripts/format.js javascript signal">
+      <td class="path">scripts/format.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">2,705</td>
+      <td class="n dim">8 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="src/lib/format.js javascript byte-identical to scripts/format.js">
+      <td class="path">src/lib/format.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">2,705</td>
+      <td class="n dim">8 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Byte-identical to scripts/format.js</div></td>
+    </tr><tr data-s="src/routes/format.js javascript byte-identical to scripts/format.js">
+      <td class="path">src/routes/format.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">2,705</td>
+      <td class="n dim">8 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Byte-identical to scripts/format.js</div></td>
+    </tr><tr data-s="src/lib/db.js javascript signal">
+      <td class="path">src/lib/db.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">1,984</td>
+      <td class="n dim">6 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="src/lib/auth.js javascript signal">
+      <td class="path">src/lib/auth.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">1,653</td>
+      <td class="n dim">5 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="tests/users.test.js javascript signal">
+      <td class="path">tests/users.test.js</td>
+      <td class="dim">JavaScript</td>
+      <td class="n">1,262</td>
+      <td class="n dim">4 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="readme.md markdown signal">
+      <td class="path">README.md</td>
+      <td class="dim">Markdown</td>
+      <td class="n">255</td>
+      <td class="n dim">1 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="package.json json signal">
+      <td class="path">package.json</td>
+      <td class="dim">JSON</td>
+      <td class="n">85</td>
+      <td class="n dim">0 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s=".gitignore other signal">
+      <td class="path">.gitignore</td>
+      <td class="dim">Other</td>
+      <td class="n">12</td>
+      <td class="n dim">0 KB</td>
+      <td><span class="pill ok">signal</span></td>
+    </tr><tr data-s="assets/hero.jpg binary binary file — unreadable by a language model">
+      <td class="path">assets/hero.jpg</td>
+      <td class="dim">Binary</td>
+      <td class="n">0</td>
+      <td class="n dim">234 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Binary file — unreadable by a language model</div></td>
+    </tr><tr data-s="assets/logo.png binary binary file — unreadable by a language model">
+      <td class="path">assets/logo.png</td>
+      <td class="dim">Binary</td>
+      <td class="n">0</td>
+      <td class="n dim">176 KB</td>
+      <td><span class="pill bad">waste</span><div class="flag">Binary file — unreadable by a language model</div></td>
+    </tr>
+    </tbody>
+  </table>
+  </div>
+  
+</div>
+
+<div class="callout green">
+  <div class="big">Next steps</div>
+  <ol class="next">
+    <li>Run <span class="cmd">ctxray init</span> to write a tuned <span class="cmd">.agentignore</span> and an <span class="cmd">AGENTS.md</span> scaffold.</li>
+    <li>Run <span class="cmd">ctxray budget 100k</span> to pick the highest-value files that fit a focused window.</li>
+    <li>Add <span class="cmd">ctxray --ci --max-waste 84</span> to CI so this does not regress.</li>
+  </ol>
+</div>
+
+<footer>
+  Generated by <a href="https://github.com/geraltbhai/ctxray">ctxray</a> in 46ms ·
+  ctxray estimator (~6% median error) ·
+  Token counts are estimates within a few percent; run with <span class="cmd">--exact</span> after
+  <span class="cmd">npm i gpt-tokenizer</span> for exact BPE counts.
+</footer>
+
+</div>
+<script>
+(function(){
+  var q=document.getElementById('q');
+  if(!q) return;
+  var rows=[].slice.call(document.querySelectorAll('#files tbody tr'));
+  var timer;
+  q.addEventListener('input',function(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      var v=q.value.trim().toLowerCase();
+      rows.forEach(function(r){
+        r.style.display = !v || r.dataset.s.indexOf(v)!==-1 ? '' : 'none';
+      });
+    },90);
+  });
+})();
+</script>
+</body>
+</html>
