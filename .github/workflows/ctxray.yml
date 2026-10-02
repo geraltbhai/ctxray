@@ -1,0 +1,52 @@
+# Context budget guard.
+#
+# Fails the build when the repository grows more agent-visible waste than you
+# have agreed to carry, and posts a breakdown to the job summary either way.
+#
+# Setup:
+#   1. Settings → Secrets and variables → Actions → New repository secret
+#      Name: CTXRAY_LICENSE   Value: your CTXRAY-… key
+#   2. Tune the thresholds below to just above where you are today, then
+#      ratchet them down as you clean up.
+
+name: ctxray
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  context-budget:
+    name: context budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check the context budget
+        env:
+          CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
+        run: |
+          npx --yes ctxray --ci \
+            --max-waste 15 \
+            --max-tokens 400k \
+            --model sonnet-5
+
+      # Optional: keep a browsable report on every run.
+      - name: Build the visual report
+        if: always()
+        env:
+          CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
+        run: npx --yes ctxray --html ctxray-report.html
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ctxray-report
+          path: ctxray-report.html
+          retention-days: 30

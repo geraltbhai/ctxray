@@ -1,0 +1,92 @@
+# Context budget on every pull request.
+#
+# Scans the base branch and the PR head, then posts (and updates) a single
+# comment showing what the change did to the repo's agent-visible token weight.
+#
+# This is the ratchet. A one-off cleanup drifts back within a quarter; a comment
+# on the PR that added 12k tokens of snapshots gets fixed while it is still one
+# line of .agentignore.
+#
+# Setup: add CTXRAY_LICENSE as a repository secret.
+
+name: ctxray pr
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  context-diff:
+    name: context diff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - name: Check out the PR head
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Snapshot the base branch
+        env:
+          CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
+        run: npx --yes ctxray base --json > base.json
+
+      - name: Diff against it
+        id: diff
+        env:
+          CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
+        run: |
+          npx --yes ctxray diff base.json head --format pr > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post or update the comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+            const marker = '<!-- ctxray-context-budget -->';
+            const withMarker = `${marker}\n${body}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: withMarker,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: withMarker,
+              });
+            }
+
+      # Uncomment to block merges that grow context waste.
+      # - name: Enforce
+      #   env:
+      #     CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
+      #   run: npx --yes ctxray diff base.json head --fail-on-regression
