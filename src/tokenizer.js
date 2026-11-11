@@ -5,7 +5,7 @@
  * A zero-dependency approximation of BPE token counts (o200k / cl100k family).
  *
  * Why not just use tiktoken?
- *   `npx ctxray` should start instantly and work offline. Real tokenizers ship
+ *   `npx github:geraltbhai/ctxray` should start instantly and work offline. Real tokenizers ship
  *   2-4 MB of vocabulary and take ~300ms to load. For *budgeting* you need
  *   accuracy within a few percent, not exactness. If you want exact numbers,
  *   `npm i gpt-tokenizer` and run `ctxray --exact`.

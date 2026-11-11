@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ctxray — see what your repository costs an AI coding agent</title>
+<meta name="description" content="ctxray counts your repo in tokens, prices it on every model, finds the context an agent cannot use, and writes the ignore file that removes it. Free CLI. Pro from $5 a month.">
+<meta property="og:title" content="ctxray — see what your repository costs an AI coding agent">
+<meta property="og:description" content="Free, zero-dependency CLI. npx github:geraltbhai/ctxray. Pro adds HTML reports, PR diffs, a context packer and CI thresholds.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<style>
+:root{--bg:#0d0f0e;--panel:#141816;--line:#252b28;--ink:#e6ebe7;--dim:#8b958f;--sig:#7ee0a1;--waste:#f0705a;--warn:#e9c46a;--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;--sans:"Inter","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--sig)}
+.wrap{max-width:980px;margin:0 auto;padding:0 22px}
+header{display:flex;justify-content:space-between;align-items:center;padding:22px 0;font-family:var(--mono);font-size:14px}
+header .logo{font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:.02em}
+header nav a{color:var(--dim);text-decoration:none;margin-left:22px}
+header nav a:hover{color:var(--ink)}
+h1{font:700 clamp(34px,6vw,58px)/1.06 var(--sans);letter-spacing:-.025em;margin:56px 0 18px;max-width:15ch}
+h1 em{font-style:normal;color:var(--waste)}
+.lede{font-size:19px;color:var(--dim);max-width:56ch;margin:0 0 30px}
+.cmd{display:inline-flex;align-items:center;gap:14px;font:600 18px var(--mono);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+.cmd b{color:var(--sig);font-weight:600}
+.cmd button{font:500 12px var(--mono);color:var(--dim);background:none;border:1px solid var(--line);border-radius:6px;padding:5px 9px;cursor:pointer}
+.cmd button:hover{color:var(--ink);border-color:var(--dim)}
+.note{font:13px var(--mono);color:var(--dim);margin-top:12px}
+pre.term{font:12.5px/1.55 var(--mono);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;overflow-x:auto;margin:46px 0 0;color:#c9d2cc}
+pre.term .g{color:var(--sig)}pre.term .r{color:var(--waste)}pre.term .y{color:var(--warn)}pre.term .d{color:var(--dim)}pre.term b{color:var(--ink)}
+section{padding:74px 0 0}
+h2{font:700 30px/1.15 var(--sans);letter-spacing:-.02em;margin:0 0 10px}
+.sub{color:var(--dim);max-width:60ch;margin:0 0 30px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.steps div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.steps code{font:13px var(--mono);color:var(--sig)}
+.steps h3{font:600 16px var(--sans);margin:10px 0 6px}
+.steps p{margin:0;color:var(--dim);font-size:14.5px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+td.c,th.c{text-align:center;width:90px}
+.yes{color:var(--sig)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;margin-bottom:22px;font:500 13px var(--mono)}
+.toggle button{background:none;border:0;color:var(--dim);padding:7px 16px;border-radius:999px;cursor:pointer;font:inherit}
+.toggle button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.plan{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;display:flex;flex-direction:column}
+.plan.hot{border-color:var(--sig)}
+.plan h3{font:600 14px var(--mono);margin:0;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.price{font:700 44px/1 var(--sans);letter-spacing:-.03em;margin:14px 0 4px}
+.price small{font:500 15px var(--sans);color:var(--dim);letter-spacing:0}
+.plan ul{list-style:none;padding:0;margin:18px 0 24px;color:var(--dim);font-size:14.5px;flex:1}
+.plan li{padding:4px 0 4px 20px;position:relative}
+.plan li:before{content:"+";position:absolute;left:0;color:var(--sig);font-family:var(--mono)}
+.btn{display:block;text-align:center;text-decoration:none;font:600 15px var(--sans);padding:12px 16px;border-radius:9px;border:1px solid var(--line);color:var(--ink)}
+.btn.primary{background:var(--sig);border-color:var(--sig);color:#0b1a11}
+.btn:hover{filter:brightness(1.08)}
+.fine{font-size:13.5px;color:var(--dim);margin-top:18px;max-width:70ch}
+details{border-bottom:1px solid var(--line);padding:14px 0}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--dim);margin:10px 0 0;max-width:68ch}
+footer{margin-top:90px;padding:28px 0 50px;border-top:1px solid var(--line);font:13px var(--mono);color:var(--dim);display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between}
+footer a{color:var(--dim)}
+:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="logo" href="./">ctxray</a>
+  <nav><a href="#how">How it works</a><a href="report.html">Sample report</a><a href="#pricing">Pricing</a><a href="https://github.com/geraltbhai/ctxray">GitHub</a></nav>
+</header>
+
+<main>
+<h1>Your repo bills you every time an agent <em>reads</em> it.</h1>
+<p class="lede">ctxray counts your codebase in tokens, prices it on every model, shows which files cost money without teaching the agent anything, and writes the ignore file that removes them.</p>
+<div class="cmd"><span><b>$</b> npx github:geraltbhai/ctxray</span><button type="button" id="copy" aria-label="Copy command">copy</button></div>
+<p class="note">No install, no config, no dependencies, no network calls. Node 18+. MIT.</p>
+
+<pre class="term" aria-label="Example ctxray output"><b>  ctxray · ~/code/api</b>
+<span class="d">  1,204 files · 8.2 MB · scanned in 210ms</span>
+
+  CONTEXT WEIGHT
+  <b>627k</b>     tokens if an agent ingested this whole repo
+  <span class="g">█ 275k signal (44%)</span>   <span class="r">█ 352k waste (56%)</span>
+
+  GRADE   <span class="r"><b>F</b></span>   Severe. The agent is mostly reading noise.
+
+  COST OF ONE FULL-CONTEXT PASS   <span class="d">(prices checked 2026-11-11)</span>
+  Claude Opus 5.5            $2.51   <span class="r">$1.41 of it wasted</span>
+  Claude Sonnet 5.5          $1.25   <span class="r">$0.704 of it wasted</span>
+  GPT-5 class                $3.14   <span class="r">$1.76 of it wasted</span>  <span class="y">⚠ exceeds context window</span>
+
+  WORST OFFENDERS
+      <span class="r">181k tok</span>  package-lock.json         <span class="d">Dependency lockfile. The manifest says the same thing</span>
+       <span class="r">41k tok</span>  test/fixtures/dump.json   <span class="d">Bulk data. Send a schema and 3 sample rows instead</span>
+       <span class="r">22k tok</span>  dist/vendor.min.js        <span class="d">Minified bundle. Maximum tokens, minimum meaning</span></pre>
+
+<section id="how">
+<h2>Find it free. Keep it fixed with Pro.</h2>
+<p class="sub">Everything that finds waste is free and open source, and stays that way. Pro is the part you share with a team and wire into CI, so a cleanup does not drift back within a quarter.</p>
+<div class="steps">
+  <div><code>npx github:geraltbhai/ctxray</code><h3>Measure</h3><p>Tokens per file, cost per model, a grade, and 14 categories of content an agent cannot use.</p></div>
+  <div><code>ctxray init</code><h3>Fix</h3><p>Writes <code>.agentignore</code> and a starter <code>AGENTS.md</code> from the repo's real shape.</p></div>
+  <div><code>ctxray diff</code><h3>Hold the line <span class="d">· Pro</span></h3><p>A pull-request comment showing what each change did to the context budget.</p></div>
+  <div><code>ctxray budget 100k</code><h3>Pack <span class="d">· Pro</span></h3><p>Given a window size, picks the highest-value files that fit, ranked by value per token.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Free vs Pro</h2>
+<table>
+<thead><tr><th>Feature</th><th class="c">Free</th><th class="c">Pro</th></tr></thead>
+<tbody>
+<tr><td>Full scan, token counts, cost on every model</td><td class="c yes">yes</td><td class="c yes">yes</td></tr>
+<tr><td>Waste and duplicate detection</td><td class="c yes">yes</td><td class="c yes">yes</td></tr>
+<tr><td><code>init</code>, <code>audit</code>, badges, JSON, programmatic API</td><td class="c yes">yes</td><td class="c yes">yes</td></tr>
+<tr><td><code>--html</code> shareable report (<a href="report.html">see one</a>)</td><td class="c">—</td><td class="c yes">yes</td></tr>
+<tr><td><code>diff</code> PR comments and baselines</td><td class="c">—</td><td class="c yes">yes</td></tr>
+<tr><td><code>budget</code> context packer</td><td class="c">—</td><td class="c yes">yes</td></tr>
+<tr><td><code>--ci</code> thresholds, annotations, exit codes</td><td class="c">—</td><td class="c yes">yes</td></tr>
+<tr><td>Commercial use in CI</td><td class="c">—</td><td class="c yes">yes</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="pricing">
+<h2>Pricing</h2>
+<p class="sub">A subscription, because the part that goes stale is the price table. Between August and November 2026, Anthropic alone replaced three models with new ones at new prices. The subscription pays for prices, tokenizer calibration and waste rules being rechecked every month.</p>
+<div class="toggle" role="group" aria-label="Billing period">
+  <button type="button" data-period="monthly" aria-pressed="true">Monthly</button>
+  <button type="button" data-period="yearly" aria-pressed="false">Yearly</button>
+</div>
+<div class="plans">
+  <div class="plan">
+    <h3>Free</h3>
+    <div class="price">$0</div>
+    <ul><li>The whole scanner</li><li>Ignore file and AGENTS.md generator</li><li>Badges and JSON output</li><li>MIT licence</li></ul>
+    <a class="btn" href="https://github.com/geraltbhai/ctxray">Get it on GitHub</a>
+  </div>
+  <div class="plan hot">
+    <h3>Pro</h3>
+    <div class="price"><span data-price="pro">$5</span> <small data-per>/ month</small></div>
+    <ul><li>HTML report, diff, budget, CI mode</li><li>Monthly price and rule updates</li><li>One developer</li><li>Cancel any time</li></ul>
+    <a class="btn primary" data-plan="pro" href="#">Subscribe</a>
+  </div>
+  <div class="plan">
+    <h3>Team</h3>
+    <div class="price"><span data-price="team">$19</span> <small data-per>/ month</small></div>
+    <ul><li>Everything in Pro</li><li>Whole organisation, CI included</li><li>One key for every repo</li><li>Cancel any time</li></ul>
+    <a class="btn" data-plan="team" href="#">Subscribe</a>
+  </div>
+</div>
+<p class="fine" id="checkout-note"></p>
+</section>
+
+<section>
+<h2>Questions</h2>
+<details><summary>What happens when I cancel?</summary><p>Your key works until the end of the period you paid for, plus five days. After that the Pro commands stop and the free scanner keeps working exactly as before. Nothing is deleted and nothing phones home.</p></details>
+<details><summary>Does it send my code anywhere?</summary><p>No. ctxray makes no network calls, free or Pro. The licence check is an offline signature check on your machine.</p></details>
+<details><summary>How accurate is the token count?</summary><p>It uses a built-in estimator fitted against a real tokenizer, with about 6% median error. That is enough to rank files and price a repo; the README shows the calibration method.</p></details>
+<details><summary>Can the licence check be bypassed?</summary><p>Yes, trivially, and the source says so. It exists to make paying the obvious path for people who find the tool useful, not to fight anyone.</p></details>
+</section>
+</main>
+
+<footer><span>ctxray · MIT · built by <a href="https://eigensys-website.vercel.app/">EigenSys</a></span><span><a href="https://github.com/geraltbhai/ctxray">source</a> · <a href="https://github.com/geraltbhai/ctxray/issues">issues</a></span></footer>
+</div>
+<script>
+// Checkout links. Leave a value empty until that plan exists at the payment
+// provider; an empty plan falls back to the "tell me when it opens" issue.
+var CHECKOUT = {
+  pro:  { monthly: '', yearly: '' },
+  team: { monthly: '', yearly: '' }
+};
+var PRICES = { pro: { monthly: '$5', yearly: '$39' }, team: { monthly: '$19', yearly: '$149' } };
+var WAITLIST = 'https://github.com/geraltbhai/ctxray/issues/new?title=Tell+me+when+Pro+checkout+opens&body=Plan%3A+';
+var period = 'monthly';
+
+function render() {
+  var open = false;
+  document.querySelectorAll('[data-price]').forEach(function (el) { el.textContent = PRICES[el.dataset.price][period]; });
+  document.querySelectorAll('[data-per]').forEach(function (el) { el.textContent = period === 'monthly' ? '/ month' : '/ year'; });
+  document.querySelectorAll('[data-plan]').forEach(function (a) {
+    var url = CHECKOUT[a.dataset.plan][period];
+    if (url) { a.href = url; a.textContent = 'Subscribe'; open = true; }
+    else { a.href = WAITLIST + a.dataset.plan + '+' + period; a.textContent = 'Notify me at launch'; }
+  });
+  document.querySelectorAll('.toggle button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.period === period)); });
+  document.getElementById('checkout-note').textContent = open
+    ? 'Payment is handled by our payment provider. Your key arrives by email seconds after checkout.'
+    : 'Checkout is not open yet. The button opens a GitHub issue so you hear the moment it is. The free scanner works today.';
+}
+document.querySelectorAll('.toggle button').forEach(function (b) { b.addEventListener('click', function () { period = b.dataset.period; render(); }); });
+document.getElementById('copy').addEventListener('click', function () {
+  var btn = this;
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText('npx github:geraltbhai/ctxray').then(function () { btn.textContent = 'copied'; setTimeout(function () { btn.textContent = 'copy'; }, 1500); });
+});
+render();
+</script>
+</body>
+</html>

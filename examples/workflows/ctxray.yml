@@ -32,17 +32,17 @@ jobs:
         env:
           CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
         run: |
-          npx --yes ctxray --ci \
+          npx --yes github:geraltbhai/ctxray --ci \
             --max-waste 15 \
             --max-tokens 400k \
-            --model sonnet-5
+            --model sonnet-5.5
 
       # Optional: keep a browsable report on every run.
       - name: Build the visual report
         if: always()
         env:
           CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
-        run: npx --yes ctxray --html ctxray-report.html
+        run: npx --yes github:geraltbhai/ctxray --html ctxray-report.html
 
       - uses: actions/upload-artifact@v4
         if: always()

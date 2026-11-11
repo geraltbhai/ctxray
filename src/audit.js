@@ -180,7 +180,7 @@ function issueBody(report, opts = {}) {
   L.push('');
   L.push('---');
   L.push('');
-  L.push(`<sub>Measured with [ctxray](${opts.url || 'https://github.com/geraltbhai/ctxray'}) (MIT, \`npx ctxray\`). Token counts are BPE estimates, ~6% median error, calibrated against \`o200k_base\`.</sub>`);
+  L.push(`<sub>Measured with [ctxray](${opts.url || 'https://github.com/geraltbhai/ctxray'}) (MIT, \`npx github:geraltbhai/ctxray\`). Token counts are BPE estimates, ~6% median error, calibrated against \`o200k_base\`.</sub>`);
   L.push('');
   return L.join('\n');
 }
@@ -265,7 +265,7 @@ function slackBody(report, opts = {}) {
     top ? `Biggest single item: ${CATEGORY_LABEL[top.category] || top.category}, ${num(top.tokens)} tokens.` : '',
     `That's ${usd(inputCost(model, t.wasteTokens))} wasted on every full-context pass. ~${num(t.reclaimableTokens)} tokens are safely removable with an \`.agentignore\`.`,
     '',
-    '`npx ctxray` to reproduce.',
+    '`npx github:geraltbhai/ctxray` to reproduce.',
   ].filter(Boolean).join('\n');
 }
 

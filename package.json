@@ -14,7 +14,7 @@
     "url": "git+https://github.com/geraltbhai/ctxray.git"
   },
   "license": "MIT",
-  "author": "Samyak Vaghela (EigenSys) <samyak.m.vaghela@gmail.com>",
+  "author": "Samyak Vaghela (EigenSys) <geraltbhai@users.noreply.github.com>",
   "type": "commonjs",
   "bin": {
     "ctxray": "bin/ctxray.js"

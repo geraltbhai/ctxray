@@ -42,14 +42,14 @@ jobs:
       - name: Snapshot the base branch
         env:
           CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
-        run: npx --yes ctxray base --json > base.json
+        run: npx --yes github:geraltbhai/ctxray base --json > base.json
 
       - name: Diff against it
         id: diff
         env:
           CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
         run: |
-          npx --yes ctxray diff base.json head --format pr > comment.md
+          npx --yes github:geraltbhai/ctxray diff base.json head --format pr > comment.md
           cat comment.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Post or update the comment
@@ -89,4 +89,4 @@ jobs:
       # - name: Enforce
       #   env:
       #     CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
-      #   run: npx --yes ctxray diff base.json head --fail-on-regression
+      #   run: npx --yes github:geraltbhai/ctxray diff base.json head --fail-on-regression

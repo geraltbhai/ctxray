@@ -16,6 +16,8 @@
  *
  * A key looks like:  CTXRAY-<base64url payload>-<signature>
  * The payload carries the buyer's email, the tier, and an issue date.
+ * Subscription keys also carry `x`, the day the paid period ends. A key with no
+ * `x` never expires (comp keys, team invoices).
  */
 
 const fs = require('fs');
@@ -25,6 +27,12 @@ const crypto = require('crypto');
 
 // Not a secret in any meaningful sense — see the note above.
 const SALT = 'ctxray/1/pro';
+
+/** Where Pro is sold. One place, so the CLI, README and site never disagree. */
+const PRO_URL = 'https://geraltbhai.github.io/ctxray/#pricing';
+
+/** Days a subscription key stays valid past its paid period, so a late card retry never breaks CI. */
+const GRACE_DAYS = 5;
 
 const PRO_FEATURES = {
   html: '--html visual report',
@@ -45,21 +53,26 @@ function sign(payloadB64) {
 }
 
 /** Generate a key. Used by the seller, shipped so buyers can verify the format. */
-function generate({ email, tier = 'pro', issued = new Date() }) {
-  const payload = JSON.stringify({
+function generate({ email, tier = 'pro', issued = new Date(), expires = null }) {
+  const fields = {
     e: email,
     t: tier,
     d: issued.toISOString().slice(0, 10),
-  });
+  };
+  // Only present on subscription keys. Key order is part of the format: the
+  // licence worker must serialise the same fields in the same order.
+  if (expires) fields.x = new Date(expires).toISOString().slice(0, 10);
+  const payload = JSON.stringify(fields);
   const b64 = Buffer.from(payload, 'utf8').toString('base64url');
   return `CTXRAY-${b64}-${sign(b64)}`;
 }
 
 /**
  * @param {string} key
- * @returns {{valid: boolean, email?: string, tier?: string, issued?: string, error?: string}}
+ * @param {Date} [now] injectable clock, for tests
+ * @returns {{valid: boolean, email?: string, tier?: string, issued?: string, expires?: string, expired?: boolean, error?: string}}
  */
-function verify(key) {
+function verify(key, now = new Date()) {
   if (typeof key !== 'string') return { valid: false, error: 'no key' };
   const trimmed = key.trim();
   const m = /^CTXRAY-([A-Za-z0-9_-]+)-([A-Za-z0-9_-]{16})$/.exec(trimmed);
@@ -72,7 +85,21 @@ function verify(key) {
   } catch (_) {
     return { valid: false, error: 'unreadable payload' };
   }
-  return { valid: true, email: payload.e, tier: payload.t, issued: payload.d };
+  const out = { email: payload.e, tier: payload.t, issued: payload.d };
+  if (payload.x) {
+    out.expires = payload.x;
+    const end = Date.parse(payload.x + 'T23:59:59Z') + GRACE_DAYS * 86400000;
+    if (Number.isNaN(end)) return { valid: false, error: 'unreadable expiry' };
+    if (now.getTime() > end) {
+      return { ...out, valid: false, expired: true, error: `subscription ended ${payload.x}` };
+    }
+  }
+  return { valid: true, ...out };
+}
+
+/** The day a period of `days` starting at `from` ends, as YYYY-MM-DD. */
+function periodEnd(days, from = new Date()) {
+  return new Date(from.getTime() + days * 86400000).toISOString().slice(0, 10);
 }
 
 /** Read the stored key, or the CTXRAY_LICENSE env var, and verify it. */
@@ -86,7 +113,7 @@ function status() {
     const stored = fs.readFileSync(configPath(), 'utf8');
     const r = verify(stored);
     if (r.valid) return { ...r, source: configPath() };
-    return { valid: false, error: r.error, source: configPath() };
+    return { ...r, valid: false, source: configPath() };
   } catch (_) {
     return { valid: false, error: 'not activated' };
   }
@@ -105,4 +132,7 @@ function deactivate() {
   try { fs.unlinkSync(configPath()); return true; } catch (_) { return false; }
 }
 
-module.exports = { generate, verify, status, activate, deactivate, configPath, PRO_FEATURES };
+module.exports = {
+  generate, verify, status, activate, deactivate, configPath, periodEnd,
+  PRO_FEATURES, PRO_URL, GRACE_DAYS,
+};

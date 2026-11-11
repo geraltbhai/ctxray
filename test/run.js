@@ -587,6 +587,62 @@ test('the Cloudflare Worker and the CLI generate identical keys', async () => {
   assert.strictEqual(license.verify(workerKey).valid, true, 'CLI rejects a worker-issued key');
 });
 
+test('a subscription key from the worker matches the CLI, expiry included', async () => {
+  const crypto = require('crypto');
+  const SALT = 'ctxray/1/pro';
+  const email = 'sub@example.com';
+  const day = new Date().toISOString().slice(0, 10);
+  const expires = license.periodEnd(31);
+
+  // Field order e, t, d, x is the worker's. It is part of the key format.
+  const payload = JSON.stringify({ e: email, t: 'pro', d: day, x: expires });
+  const b64 = Buffer.from(new TextEncoder().encode(payload)).toString('base64url');
+  const key = await crypto.webcrypto.subtle.importKey(
+    'raw', new TextEncoder().encode(SALT),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sigBuf = await crypto.webcrypto.subtle.sign('HMAC', key, new TextEncoder().encode(b64));
+  const workerKey = `CTXRAY-${b64}-${Buffer.from(sigBuf).toString('base64url').slice(0, 16)}`;
+
+  assert.strictEqual(workerKey, license.generate({ email, tier: 'pro', expires }));
+  const r = license.verify(workerKey);
+  assert.strictEqual(r.valid, true);
+  assert.strictEqual(r.expires, expires);
+});
+
+// ---------------------------------------------------------------------------
+group('subscription keys');
+
+test('a key is valid through its paid period and the grace days, then expires', () => {
+  const issued = new Date('2026-11-01T12:00:00Z');
+  const key = license.generate({ email: 's@example.com', issued, expires: '2026-12-01' });
+  const at = (d) => license.verify(key, new Date(d));
+
+  assert.strictEqual(at('2026-11-15T00:00:00Z').valid, true, 'mid-period');
+  assert.strictEqual(at('2026-12-01T23:00:00Z').valid, true, 'last paid day');
+  assert.strictEqual(at('2026-12-06T12:00:00Z').valid, true, 'inside grace');
+  const late = at('2026-12-07T00:00:01Z');
+  assert.strictEqual(late.valid, false, 'after grace');
+  assert.strictEqual(late.expired, true);
+  assert.ok(/2026-12-01/.test(late.error), 'the error names the end date');
+});
+
+test('a key without an expiry never expires and keeps the original format', () => {
+  const key = license.generate({ email: 'old@example.com', issued: new Date('2026-08-22T00:00:00Z') });
+  const payload = JSON.parse(Buffer.from(key.split('-')[1], 'base64url').toString('utf8'));
+  assert.deepStrictEqual(Object.keys(payload), ['e', 't', 'd'], 'no x field on perpetual keys');
+  assert.strictEqual(license.verify(key, new Date('2036-01-01T00:00:00Z')).valid, true);
+});
+
+test('tampering with the expiry breaks the signature', () => {
+  const key = license.generate({ email: 's@example.com', expires: '2026-12-01' });
+  const [, b64, sig] = /^CTXRAY-([A-Za-z0-9_-]+)-([A-Za-z0-9_-]{16})$/.exec(key);
+  const p = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
+  p.x = '2099-01-01';
+  const forged = `CTXRAY-${Buffer.from(JSON.stringify(p)).toString('base64url')}-${sig}`;
+  assert.strictEqual(license.verify(forged).valid, false);
+});
+
 // ---------------------------------------------------------------------------
 group('robustness');
 

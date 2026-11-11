@@ -5,12 +5,12 @@
 Point it at a repo. In under a second it tells you how many tokens the codebase is, what that costs on every model, which files are burning money without teaching the agent anything, and then writes the ignore file that removes them.
 
 ```
-npx ctxray
+npx github:geraltbhai/ctxray
 ```
 
 No install, no config, no dependencies, no network calls. Node 18+.
 
-> Not on npm yet? Run it straight from GitHub: `npx github:geraltbhai/ctxray`
+> It runs straight from GitHub. It is not published to npm, so do not run a bare `npx ctxray`.
 >
 > Built by [EigenSys](https://eigensys-website.vercel.app/), a small AI engineering studio. We build RAG systems, agents and evaluation harnesses for teams that need them to actually work.
 
@@ -28,16 +28,16 @@ No install, no config, no dependencies, no network calls. Node 18+.
 
   GRADE   F   Severe. The agent is mostly reading noise.
 
-  COST OF ONE FULL-CONTEXT PASS   (prices checked 2026-08-22)
-  Claude Opus 5              $3.14  ████████████████  $1.76 of it wasted  ⚠ exceeds context window
-  Claude Sonnet 5            $1.88  █████████▌······  $1.06 of it wasted  ⚠ exceeds context window
-  Claude Haiku 4.5          $0.627  ███▏············  $0.352 of it wasted  ⚠ exceeds context window
-  GPT-5 class                $3.14  ████████████████  $1.76 of it wasted
+  COST OF ONE FULL-CONTEXT PASS   (prices checked 2026-11-11)
+  Claude Opus 5.5            $2.51  ████████████▊···  $1.41 of it wasted
+  Claude Sonnet 5.5          $1.25  ██████▍·········  $0.704 of it wasted
+  Claude Haiku 5.5         $0.0627  ▎···············  $0.0352 of it wasted
+  GPT-5 class                $3.14  ████████████████  $1.76 of it wasted  ⚠ exceeds context window
   Gemini 3.x Pro             $1.25  ██████▍·········  $0.704 of it wasted
 
   PROJECTED WASTE
-  At 20 full-context Claude Opus 5 calls/day, the 352k wasted tokens cost
-  $35.20 /day  ·  $1056 /month  ·  $12848 /year
+  At 20 full-context Claude Opus 5.5 calls/day, the 352k wasted tokens cost
+  $28.16 /day  ·  $845 /month  ·  $10278 /year
 
   WHERE THE WASTE IS
   ● Lockfiles                       181k tok ██████████████████  1 file
@@ -84,8 +84,8 @@ None of this helps the model. All of it is billed, and all of it makes the model
 ## Install
 
 ```bash
-npx ctxray            # no install
-npm i -g ctxray       # or install it
+npx github:geraltbhai/ctxray            # no install
+npm i -g github:geraltbhai/ctxray       # or install it
 ```
 
 ## Usage
@@ -94,7 +94,7 @@ npm i -g ctxray       # or install it
 ctxray                              # scan the current directory
 ctxray ~/code/api                   # scan somewhere else
 ctxray --all                        # include what .gitignore hides
-ctxray --model sonnet-5 --runs-per-day 60
+ctxray --model sonnet-5.5 --runs-per-day 60
 ctxray --json | jq '.wasteCategories'
 ctxray --list-files | head -20      # "tokens<TAB>path", heaviest first
 
@@ -194,12 +194,12 @@ A one-off cleanup drifts back within a quarter. This is the ratchet.
 ### CI
 
 ```yaml
-- run: npx ctxray --ci --max-waste 15 --max-tokens 400k
+- run: npx github:geraltbhai/ctxray --ci --max-waste 15 --max-tokens 400k
   env:
     CTXRAY_LICENSE: ${{ secrets.CTXRAY_LICENSE }}
 ```
 
-Exits non-zero on a breach, writes GitHub Actions annotations, and posts a table to the job summary. Two ready-made workflows ship with the repo: [`ctxray.yml`](.github/workflows/ctxray.yml) for threshold enforcement, and [`ctxray-pr.yml`](.github/workflows/ctxray-pr.yml) which posts a self-updating context-budget comment on every pull request.
+Exits non-zero on a breach, writes GitHub Actions annotations, and posts a table to the job summary. Two ready-made workflows ship in `examples/workflows/` (copy them into `.github/workflows/`): [`ctxray.yml`](examples/workflows/ctxray.yml) for threshold enforcement, and [`ctxray-pr.yml`](examples/workflows/ctxray-pr.yml) which posts a self-updating context-budget comment on every pull request.
 
 ### Badges
 
@@ -303,7 +303,18 @@ Everything that **finds** problems is free forever, MIT-licensed, and always wil
 | `--ci` thresholds and exit codes | | ✓ |
 | Commercial use in CI | | ✓ |
 
-Solo $19 · Team $49 · one-time, all future versions: **[buy a licence](https://eigensys-website.vercel.app/#contact)**
+### Pro is a subscription
+
+| | Monthly | Yearly |
+| --- | ---: | ---: |
+| **Pro** — one developer | $5 | $39 |
+| **Team** — a whole organisation, CI included | $19 | $149 |
+
+**[Subscribe at geraltbhai.github.io/ctxray](https://geraltbhai.github.io/ctxray/#pricing)** · cancel any time
+
+Why a subscription for a CLI: the part that goes stale is the price table. Between August and November 2026, Anthropic alone replaced three models with new ones at new prices, and a cost tool with old prices is wrong in a way nobody notices. The subscription pays for the table, the tokenizer calibration and the waste rules being rechecked every month.
+
+Your key is valid for the period you paid for, plus five days of grace so a late card retry never breaks a build. Each renewal emails the next key. Cancel and the free scanner keeps working exactly as before.
 
 ```bash
 ctxray activate CTXRAY-…

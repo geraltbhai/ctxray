@@ -48,4 +48,4 @@ Happy to open a PR with this if it'd be welcome — or feel free to ignore it, I
 
 ---
 
-<sub>Measured with [ctxray](https://github.com/geraltbhai/ctxray) (MIT, `npx ctxray`). Token counts are BPE estimates, ~6% median error, calibrated against `o200k_base`.</sub>
+<sub>Measured with [ctxray](https://github.com/geraltbhai/ctxray) (MIT, `npx github:geraltbhai/ctxray`). Token counts are BPE estimates, ~6% median error, calibrated against `o200k_base`.</sub>

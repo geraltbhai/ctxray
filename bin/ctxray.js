@@ -134,14 +134,14 @@ ${B('DIFF OPTIONS')}   ${G('PRO')}
   ${C('--fail-on-regression')}      exit non-zero when waste grows
 
 ${B('EXAMPLES')}
-  ${G('$')} npx ctxray
-  ${G('$')} npx ctxray ~/code/api --model sonnet-5 --runs-per-day 60
-  ${G('$')} npx ctxray --all              ${G('# how bad would it be without .gitignore?')}
-  ${G('$')} npx ctxray init --dry-run
-  ${G('$')} npx ctxray audit --format issue
-  ${G('$')} npx ctxray budget 100k > context-files.txt
-  ${G('$')} npx ctxray --json > base.json && npx ctxray diff base.json --format pr
-  ${G('$')} npx ctxray --ci --max-waste 15
+  ${G('$')} npx github:geraltbhai/ctxray
+  ${G('$')} npx github:geraltbhai/ctxray ~/code/api --model sonnet-5.5 --runs-per-day 60
+  ${G('$')} npx github:geraltbhai/ctxray --all              ${G('# how bad would it be without .gitignore?')}
+  ${G('$')} npx github:geraltbhai/ctxray init --dry-run
+  ${G('$')} npx github:geraltbhai/ctxray audit --format issue
+  ${G('$')} npx github:geraltbhai/ctxray budget 100k > context-files.txt
+  ${G('$')} npx github:geraltbhai/ctxray --json > base.json && npx github:geraltbhai/ctxray diff base.json --format pr
+  ${G('$')} npx github:geraltbhai/ctxray --ci --max-waste 15
 `;
 }
 
@@ -158,10 +158,12 @@ function requirePro(feature) {
   Everything that ${c.bold('finds')} problems is free forever. Pro unlocks the outputs
   you share and automate: the HTML report, the context packer, CI thresholds.
 
-  ${c.cyan('One-time licence, all future versions:')}
-    ${c.underline('https://eigensys-website.vercel.app/#contact')}
+  ${st.expired
+    ? c.yellow(`Your ${st.error}. Renewing sends a fresh key:`)
+    : c.cyan('Pro is $5 a month or $39 a year, cancel any time:')}
+    ${c.underline(license.PRO_URL)}
 
-  Already bought?  ${c.cyan('ctxray activate CTXRAY-…')}
+  Already subscribed?  ${c.cyan('ctxray activate CTXRAY-…')}
   Or set ${c.cyan('CTXRAY_LICENSE')} in your environment / CI secrets.
 
 `);
@@ -299,7 +301,7 @@ function maybeUpsell(opts) {
   if (opts.quiet || license.status().valid) return;
   process.stdout.write(
     `  ${c.gray('Pro adds the HTML report, the context packer and CI thresholds —')}\n` +
-    `  ${c.gray('one-time licence at')} ${c.cyan('https://eigensys-website.vercel.app/#contact')}\n\n`
+    `  ${c.gray('$5 a month at')} ${c.cyan(license.PRO_URL)}\n\n`
   );
 }
 
@@ -556,11 +558,11 @@ function cmdLicense() {
   process.stdout.write('\n');
   if (st.valid) {
     process.stdout.write(`  ${c.green('✓')} ctxray ${c.bold('Pro')} — licensed to ${c.bold(st.email)}\n`);
-    process.stdout.write(`    ${c.gray(`tier ${st.tier} · issued ${st.issued} · from ${st.source}`)}\n\n`);
+    process.stdout.write(`    ${c.gray(`tier ${st.tier} · issued ${st.issued} · ${st.expires ? `paid through ${st.expires}` : 'no expiry'} · from ${st.source}`)}\n\n`);
   } else {
     process.stdout.write(`  ${c.yellow('·')} ctxray ${c.bold('Free')} ${c.gray(`(${st.error})`)}\n`);
     process.stdout.write(`    ${c.gray('Pro features:')} ${Object.values(license.PRO_FEATURES).join(', ')}\n`);
-    process.stdout.write(`    ${c.cyan('https://eigensys-website.vercel.app/#contact')}\n\n`);
+    process.stdout.write(`    ${c.cyan(license.PRO_URL)}\n\n`);
   }
   return 0;
 }
@@ -573,7 +575,7 @@ function cmdActivate(key) {
       `    ${c.gray('Copy the whole key including the CTXRAY- prefix.')}\n\n`);
     process.exit(1);
   }
-  process.stdout.write(`\n  ${c.green('✓')} ctxray Pro activated for ${c.bold(r.email)}\n    ${c.gray(`saved to ${r.source}`)}\n\n`);
+  process.stdout.write(`\n  ${c.green('✓')} ctxray Pro activated for ${c.bold(r.email)}\n    ${c.gray(`${r.expires ? `paid through ${r.expires} · ` : ''}saved to ${r.source}`)}\n\n`);
   return 0;
 }
 
