@@ -120,7 +120,7 @@ ol.next{margin:0;padding-left:20px;line-height:2}
     <div class="brand"><span class="dot"></span> ctxray</div>
     <h1>demo-app</h1>
     <p class="sub mono">/tmp/demo-app</p>
-    <p class="sub">25 files · 1.3 MB · scanned 8/22/2026, 11:36:52 PM · ctxray estimator (~6% median error)</p>
+    <p class="sub">25 files · 1.3 MB · scanned 11/12/2026, 6:46:33 PM · ctxray estimator (~6% median error)</p>
     <p class="sub">2 binary files (410 KB) counted as zero tokens — agents skip them.</p>
   </div>
   <div class="grade">
@@ -133,7 +133,7 @@ ol.next{margin:0;padding-left:20px;line-height:2}
   <div class="kpi"><div class="v">312k</div><div class="k">Tokens in repo</div></div>
   <div class="kpi"><div class="v" style="color:var(--bad)">94%</div><div class="k">Is waste</div></div>
   <div class="kpi"><div class="v" style="color:var(--good)">274k</div><div class="k">Reclaimable</div></div>
-  <div class="kpi"><div class="v">$1.56</div><div class="k">Per full pass · Claude Opus 5</div></div>
+  <div class="kpi"><div class="v">$1.25</div><div class="k">Per full pass · Claude Opus 5.5</div></div>
 </div>
 
 <div class="panel">
@@ -150,9 +150,9 @@ ol.next{margin:0;padding-left:20px;line-height:2}
 </div>
 
 <div class="callout">
-  <div class="big">$1751 / month burned on tokens the agent cannot use</div>
-  <div class="sub" style="margin-top:6px">Assuming 40 full-context Claude Opus 5 calls per day at $5.00/M input tokens.
-  That is $58.37/day and $21304/year, before output tokens.</div>
+  <div class="big">$700 / month burned on tokens the agent cannot use</div>
+  <div class="sub" style="margin-top:6px">Assuming 20 full-context Claude Opus 5.5 calls per day at $4.00/M input tokens.
+  That is $23.35/day and $8522/year, before output tokens.</div>
 </div>
 
 <div class="panel">
@@ -160,23 +160,23 @@ ol.next{margin:0;padding-left:20px;line-height:2}
   <table>
     <thead><tr><th>Model</th><th class="n">As-is</th><th class="n">After cleanup</th><th class="n">Saved</th><th class="n">Window fit</th></tr></thead>
     <tbody><tr>
-      <td><strong>Claude Opus 5</strong><span class="vendor">Anthropic</span></td>
-      <td class="n">$1.56</td>
-      <td class="n good">$0.100</td>
-      <td class="n save">−$1.46</td>
-      <td class="n"><span class="pill bad">1.6× over</span></td>
+      <td><strong>Claude Opus 5.5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$1.25</td>
+      <td class="n good">$0.080</td>
+      <td class="n save">−$1.17</td>
+      <td class="n"><span class="pill ok">31% of window</span></td>
     </tr><tr>
-      <td><strong>Claude Sonnet 5</strong><span class="vendor">Anthropic</span></td>
-      <td class="n">$0.935</td>
-      <td class="n good">$0.060</td>
-      <td class="n save">−$0.876</td>
-      <td class="n"><span class="pill bad">1.6× over</span></td>
+      <td><strong>Claude Sonnet 5.5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$0.624</td>
+      <td class="n good">$0.040</td>
+      <td class="n save">−$0.584</td>
+      <td class="n"><span class="pill ok">31% of window</span></td>
     </tr><tr>
-      <td><strong>Claude Haiku 4.5</strong><span class="vendor">Anthropic</span></td>
-      <td class="n">$0.312</td>
-      <td class="n good">$0.020</td>
-      <td class="n save">−$0.292</td>
-      <td class="n"><span class="pill bad">1.6× over</span></td>
+      <td><strong>Claude Haiku 5.5</strong><span class="vendor">Anthropic</span></td>
+      <td class="n">$0.031</td>
+      <td class="n good">$0.002</td>
+      <td class="n save">−$0.029</td>
+      <td class="n"><span class="pill ok">31% of window</span></td>
     </tr><tr>
       <td><strong>GPT-5 class</strong><span class="vendor">OpenAI</span></td>
       <td class="n">$1.56</td>
@@ -191,7 +191,7 @@ ol.next{margin:0;padding-left:20px;line-height:2}
       <td class="n"><span class="pill ok">31% of window</span></td>
     </tr></tbody>
   </table>
-  <p class="sub" style="margin-top:14px">Input-token prices checked 2026-08-22. Override with <span class="cmd">--pricing models.json</span>.</p>
+  <p class="sub" style="margin-top:14px">Input-token prices checked 2026-11-11. Override with <span class="cmd">--pricing models.json</span>.</p>
 </div>
 
 <div class="grid2">
@@ -536,34 +536,34 @@ ol.next{margin:0;padding-left:20px;line-height:2}
       <tbody>
       <tr>
         <td class="path">data/customers.csv<div class="flag">Bulk data file (219 KB) — send a schema and 3 sample rows instead</div></td>
-        <td class="n"><strong>96k</strong><div class="dim" style="font-size:11px">$0.480</div></td>
+        <td class="n"><strong>96k</strong><div class="dim" style="font-size:11px">$0.384</div></td>
       </tr><tr>
         <td class="path">package-lock.json<div class="flag">Dependency lockfile — huge, and the manifest says the same thing</div></td>
-        <td class="n"><strong>79k</strong><div class="dim" style="font-size:11px">$0.395</div></td>
+        <td class="n"><strong>79k</strong><div class="dim" style="font-size:11px">$0.316</div></td>
       </tr><tr>
         <td class="path">assets/map.svg<div class="flag">Minified or single-line generated file</div></td>
-        <td class="n"><strong>28k</strong><div class="dim" style="font-size:11px">$0.140</div></td>
+        <td class="n"><strong>28k</strong><div class="dim" style="font-size:11px">$0.112</div></td>
       </tr><tr>
         <td class="path">tests/fixtures/sample-response.json<div class="flag">Test fixture/snapshot under fixtures/ — high volume, low signal</div></td>
-        <td class="n"><strong>26k</strong><div class="dim" style="font-size:11px">$0.129</div></td>
+        <td class="n"><strong>26k</strong><div class="dim" style="font-size:11px">$0.103</div></td>
       </tr><tr>
         <td class="path">tests/__snapshots__/users.test.js.snap<div class="flag">Test fixture/snapshot under __snapshots__/ — high volume, low signal</div></td>
-        <td class="n"><strong>12k</strong><div class="dim" style="font-size:11px">$0.060</div></td>
+        <td class="n"><strong>12k</strong><div class="dim" style="font-size:11px">$0.048</div></td>
       </tr><tr>
         <td class="path">dist/bundle.js<div class="flag">Build artifact under dist/ — regenerated from source</div></td>
-        <td class="n"><strong>11k</strong><div class="dim" style="font-size:11px">$0.053</div></td>
+        <td class="n"><strong>11k</strong><div class="dim" style="font-size:11px">$0.042</div></td>
       </tr><tr>
         <td class="path">dist/vendor.min.js<div class="flag">Build artifact under dist/ — regenerated from source</div></td>
-        <td class="n"><strong>10k</strong><div class="dim" style="font-size:11px">$0.050</div></td>
+        <td class="n"><strong>10k</strong><div class="dim" style="font-size:11px">$0.040</div></td>
       </tr><tr>
         <td class="path">CHANGELOG.md<div class="flag">Long changelog (26 KB) — history an agent rarely needs</div></td>
-        <td class="n"><strong>8.6k</strong><div class="dim" style="font-size:11px">$0.043</div></td>
+        <td class="n"><strong>8.6k</strong><div class="dim" style="font-size:11px">$0.034</div></td>
       </tr><tr>
         <td class="path">src/generated/api_pb2.py<div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
-        <td class="n"><strong>6.9k</strong><div class="dim" style="font-size:11px">$0.035</div></td>
+        <td class="n"><strong>6.9k</strong><div class="dim" style="font-size:11px">$0.028</div></td>
       </tr><tr>
         <td class="path">src/types/schema.generated.ts<div class="flag">Declares itself auto-generated — regenerate, do not read</div></td>
-        <td class="n"><strong>6.2k</strong><div class="dim" style="font-size:11px">$0.031</div></td>
+        <td class="n"><strong>6.2k</strong><div class="dim" style="font-size:11px">$0.025</div></td>
       </tr>
       </tbody>
     </table>
@@ -754,7 +754,7 @@ ol.next{margin:0;padding-left:20px;line-height:2}
 </div>
 
 <footer>
-  Generated by <a href="https://github.com/geraltbhai/ctxray">ctxray</a> in 46ms ·
+  Generated by <a href="https://github.com/geraltbhai/ctxray">ctxray</a> in 50ms ·
   ctxray estimator (~6% median error) ·
   Token counts are estimates within a few percent; run with <span class="cmd">--exact</span> after
   <span class="cmd">npm i gpt-tokenizer</span> for exact BPE counts.
