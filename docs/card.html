@@ -1,0 +1,34 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>ctxray: six repos</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{overflow:hidden}
+html{background:#0d0f0e}body{width:1200px;height:675px;margin:0 auto;background:#0d0f0e;color:#e6ebe7;font-family:Inter,"Helvetica Neue",Arial,sans-serif;padding:52px 60px;display:flex;flex-direction:column}
+.k{font:600 15px ui-monospace,Menlo,monospace;color:#7ee0a1;letter-spacing:.06em;text-transform:uppercase}
+h1{font-size:40px;line-height:1.12;letter-spacing:-.02em;margin:12px 0 30px;font-weight:700}
+h1 em{font-style:normal;color:#f0705a}
+.row{display:grid;grid-template-columns:170px 120px 1fr 430px;align-items:center;gap:18px;padding:11px 0;border-top:1px solid #252b28}
+.row.h{border-top:0;font:600 12px ui-monospace,Menlo,monospace;color:#8b958f;text-transform:uppercase;letter-spacing:.08em;padding-bottom:6px}
+.name{font:600 20px ui-monospace,Menlo,monospace}
+.tot{font:500 19px ui-monospace,Menlo,monospace;color:#c9d2cc;text-align:right}
+.bar{height:16px;background:#7ee0a1;border-radius:3px;position:relative;overflow:hidden}
+.bar i{position:absolute;right:0;top:0;bottom:0;background:#f0705a}
+.pct{font:700 16px ui-monospace,Menlo,monospace;margin-left:8px}
+.barwrap{display:flex;align-items:center}
+.why{font-size:16px;color:#8b958f;line-height:1.3}
+.why b{color:#e6ebe7;font-weight:600}
+.foot{margin-top:auto;display:flex;justify-content:space-between;white-space:nowrap;font:13px ui-monospace,Menlo,monospace;color:#8b958f}
+.foot b{color:#7ee0a1;font-weight:600}
+.leg span{display:inline-block;width:11px;height:11px;border-radius:2px;margin:0 6px 0 16px;vertical-align:-1px}
+</style></head><body>
+<div class="k">What a coding agent would read · whole repo</div>
+<h1>LangChain's lockfiles outweigh its code.<br><em>5.11M tokens</em> of uv.lock vs 4.45M an agent can use.</h1>
+<div class="row h"><div>Repo</div><div style="text-align:right">Tokens</div><div class="leg" style="margin-left:-16px"><span style="background:#7ee0a1"></span>signal<span style="background:#f0705a"></span>waste</div><div>Biggest waste</div></div>
+<div class="row"><div class="name">langchain</div><div class="tot">9.82M</div><div class="barwrap"><div class="bar" style="width:100%"><i style="width:55%"></i></div><span class="pct">55%</span></div><div class="why"><b>22 uv.lock files</b>, 5.11M tokens</div></div>
+<div class="row"><div class="name">ollama</div><div class="tot">9.26M</div><div class="barwrap"><div class="bar" style="width:94%"><i style="width:51%"></i></div><span class="pct">51%</span></div><div class="why"><b>shakespeare.txt</b> test data, 1.33M tokens</div></div>
+<div class="row"><div class="name">excalidraw</div><div class="tot">4.50M</div><div class="barwrap"><div class="bar" style="width:46%"><i style="width:54%"></i></div><span class="pct">54%</span></div><div class="why"><b>a wasm wrapper</b> and a font source file, 590k</div></div>
+<div class="row"><div class="name">fastapi</div><div class="tot">8.47M</div><div class="barwrap"><div class="bar" style="width:86%"><i style="width:43%"></i></div><span class="pct">43%</span></div><div class="why"><b>one drawio SVG</b>, 631k tokens</div></div>
+<div class="row"><div class="name">shadcn/ui</div><div class="tot">7.79M</div><div class="barwrap"><div class="bar" style="width:79%"><i style="width:38%"></i></div><span class="pct">38%</span></div><div class="why"><b>22 lockfiles</b>, 813k tokens</div></div>
+<div class="row"><div class="name">express</div><div class="tot">196k</div><div class="barwrap"><div class="bar" style="width:2%"><i style="width:0%"></i></div><span class="pct" style="color:#7ee0a1">0%</span></div><div class="why">nothing worth flagging</div></div>
+<div class="foot"><span><b>npx github:geraltbhai/ctxray</b> · free · MIT · offline</span><span>shallow clones, 12–13 Nov 2026 · estimator ~6% median error</span></div>
+</body></html>
