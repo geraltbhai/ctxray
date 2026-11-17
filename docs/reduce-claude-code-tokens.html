@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to reduce Claude Code token usage (November 2026) · ctxray</title>
+<meta name="description" content="What actually shrinks a Claude Code bill: clearing and compacting, model and effort choice, a small CLAUDE.md, subagents and hooks for noisy output, and Read deny rules that keep lockfiles and fixtures out of context.">
+<link rel="canonical" href="https://geraltbhai.github.io/ctxray/reduce-claude-code-tokens.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="How to reduce Claude Code token usage">
+<meta property="og:description" content="Eight changes, in order of impact, with the commands and settings for each. Checked against the Claude Code docs on 17 Nov 2026.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://geraltbhai.github.io/ctxray/reduce-claude-code-tokens.html">
+<meta property="og:image" content="https://geraltbhai.github.io/ctxray/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://geraltbhai.github.io/ctxray/og.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"How to reduce Claude Code token usage","datePublished":"2026-11-17","dateModified":"2026-11-17","author":{"@type":"Organization","name":"EigenSys"},"about":"Claude Code token usage and cost"}</script>
+<style>:root{--bg:#0d0f0e;--panel:#141816;--line:#252b28;--ink:#e6ebe7;--dim:#8b958f;--sig:#7ee0a1;--waste:#f0705a;--warn:#e9c46a;--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;--sans:"Inter","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--sig)}
+.wrap{max-width:980px;margin:0 auto;padding:0 22px}
+header{display:flex;justify-content:space-between;align-items:center;padding:22px 0;font-family:var(--mono);font-size:14px}
+header .logo{font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:.02em}
+header nav a{color:var(--dim);text-decoration:none;margin-left:22px}
+header nav a:hover{color:var(--ink)}
+h1{font:700 clamp(34px,6vw,58px)/1.06 var(--sans);letter-spacing:-.025em;margin:56px 0 18px;max-width:15ch}
+h1 em{font-style:normal;color:var(--waste)}
+.kicker{font:600 13px/1.5 var(--mono);color:var(--sig);letter-spacing:.06em;text-transform:uppercase;margin:56px 0 0}
+.kicker+h1{margin-top:12px}
+.lede{font-size:19px;color:var(--dim);max-width:56ch;margin:0 0 30px}
+.note{font:13px var(--mono);color:var(--dim);margin-top:12px}
+section{padding:74px 0 0}
+h2{font:700 30px/1.15 var(--sans);letter-spacing:-.02em;margin:0 0 10px}
+.sub{color:var(--dim);max-width:60ch;margin:0 0 30px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.fine{font-size:13.5px;color:var(--dim);margin-top:18px;max-width:70ch}
+footer{margin-top:90px;padding:28px 0 50px;border-top:1px solid var(--line);font:13px var(--mono);color:var(--dim);display:flex;gap:20px;flex-wrap:wrap;justify-content:space-between}
+footer a{color:var(--dim)}
+:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+main.doc{max-width:74ch}
+main.doc h1{max-width:20ch}
+main.doc h2{margin-top:56px;font-size:26px}
+main.doc h3{font:600 18px var(--sans);margin:30px 0 8px}
+main.doc p,main.doc li{color:#c9d2cc}
+main.doc li{margin:6px 0}
+main.doc code{font:14px var(--mono);color:var(--sig);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+main.doc pre{font:13px/1.55 var(--mono);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;color:#c9d2cc}
+main.doc pre code{background:none;border:0;padding:0;color:inherit;font-size:13px}
+.toc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 20px;margin:26px 0 0;font-size:15px}
+.toc ol{margin:6px 0 0;padding-left:20px}
+.toc a{color:var(--ink);text-decoration:none}.toc a:hover{color:var(--sig)}
+.callout{border-left:3px solid var(--warn);padding:2px 0 2px 16px;margin:20px 0}
+td.n{font-family:var(--mono);text-align:right;white-space:nowrap}
+.src li{font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="logo" href="./">ctxray</a>
+  <nav><a href="./">Home</a><a href="report.html">Sample report</a><a href="https://github.com/geraltbhai/ctxray">GitHub</a></nav>
+</header>
+<main class="doc">
+<p class="kicker">Guide · checked against the Claude Code docs, 17 Nov 2026</p>
+<h1>How to reduce Claude Code token usage</h1>
+<p class="lede">Claude Code sends your whole conversation with every request, so most of what you pay for is context, not the prompt you just typed. These are the changes that actually shrink it, roughly in order of impact, with the command or setting for each.</p>
+
+<nav class="toc" aria-label="Contents"><strong>Contents</strong>
+<ol>
+<li><a href="#where">Where the tokens go</a></li>
+<li><a href="#clear">Clear between tasks, compact on purpose</a></li>
+<li><a href="#model">Match the model and effort to the job</a></li>
+<li><a href="#base">Keep the always-loaded context small</a></li>
+<li><a href="#noise">Keep noisy output out of the main conversation</a></li>
+<li><a href="#junk">Stop Claude reading files it can't use</a></li>
+<li><a href="#prompts">Ask precisely, plan first</a></li>
+<li><a href="#measure">Measure what changed</a></li>
+</ol></nav>
+
+<h2 id="where">1. Where the tokens go</h2>
+<p>Every request carries the full conversation: CLAUDE.md, every file Claude has read, every tool result and every message. Each tool call is another request carrying that history again. Prompt caching makes the repeated part much cheaper, but not free, so a one-line question at the end of a long session still pays to re-read everything before it. After a break longer than the cache lifetime, the first message misses the cache and pays full price for the whole context.</p>
+<p>Two other costs build up quietly. Extended thinking is billed as output tokens, the expensive kind. And every subagent sends its own requests on top of the main conversation.</p>
+<p>For scale, Anthropic reports an average of about $13 per developer per active day across enterprise deployments, with 90% of users under $30.</p>
+
+<h2 id="clear">2. Clear between tasks, compact on purpose</h2>
+<ul>
+<li><code>/clear</code> when you move to unrelated work. Stale context is re-sent with every later message, and clearing costs nothing. Run <code>/rename</code> first if you might want to <code>/resume</code> the session later.</li>
+<li><code>/compact Focus on the API changes and the failing tests</code> when you need continuity. Compaction has to read the whole conversation to summarize it, so it is a large request in itself: compact once, deliberately, rather than repeatedly.</li>
+<li>Standing compaction instructions can live in CLAUDE.md under a <code># Compact instructions</code> heading.</li>
+</ul>
+
+<h2 id="model">3. Match the model and effort to the job</h2>
+<p>Sonnet handles most coding work. Keep Opus for architecture and long multi-step reasoning, and switch with <code>/model</code>. Subagents that only search or summarize can run on Haiku: set <code>model: haiku</code> in the subagent's configuration. Note that switching models mid-session re-reads the conversation uncached, because each model has its own cache.</p>
+<table>
+<thead><tr><th>Per million tokens</th><th class="n">Input</th><th class="n">Output</th><th class="n">Cache read</th></tr></thead>
+<tbody>
+<tr><td>Opus 5.5</td><td class="n">$4.00</td><td class="n">$20.00</td><td class="n">$0.20</td></tr>
+<tr><td>Sonnet 5.5</td><td class="n">$2.00</td><td class="n">$10.00</td><td class="n">$0.10</td></tr>
+<tr><td>Haiku 5.5, prompt ≤ 100k</td><td class="n">$0.10</td><td class="n">$0.50</td><td class="n">$0.01</td></tr>
+<tr><td>Haiku 5.5, prompt &gt; 100k</td><td class="n">$0.50</td><td class="n">$2.50</td><td class="n">$0.05</td></tr>
+</tbody></table>
+<p class="callout">Haiku's price jumps five-fold once a single request goes over 100k input tokens, cache reads included. A long main session is often past that line, so Haiku pays off most in short, focused subagents.</p>
+<p>Thinking is the other lever. You can't switch it off on the 5.5 models or Fable, but <code>/effort</code> lowers how much of it you pay for on simple tasks. On models with a fixed thinking budget, <code>MAX_THINKING_TOKENS</code> caps it.</p>
+
+<h2 id="base">4. Keep the always-loaded context small</h2>
+<ul>
+<li><strong>CLAUDE.md</strong> is loaded at the start of every session, whatever you are doing. Anthropic suggests keeping it under about 200 lines. Move workflow-specific instructions, such as how to review a PR or run a migration, into <a href="https://code.claude.com/docs/en/skills">skills</a>, which load only when used.</li>
+<li><strong>MCP servers</strong>: tool definitions are deferred by default, so only names and server instructions enter context up front. Still, run <code>/context</code> to see what is taking space, disable servers you are not using in <code>/mcp</code>, and prefer a CLI such as <code>gh</code> when one does the job.</li>
+</ul>
+
+<h2 id="noise">5. Keep noisy output out of the main conversation</h2>
+<ul>
+<li><strong>Subagents for verbose work.</strong> Test runs, log digging and documentation lookups can flood the context. In a subagent the noise stays in its context and only a summary comes back.</li>
+<li><strong>Hooks that filter before Claude reads.</strong> A <code>PreToolUse</code> hook can rewrite a test command so only failures come back. The <a href="https://code.claude.com/docs/en/costs#offload-processing-to-hooks-and-skills">official example</a> does this for <code>npm test</code>, <code>pytest</code> and <code>go test</code>, turning tens of thousands of tokens into hundreds.</li>
+<li><strong>Code intelligence plugins</strong> for typed languages: one go-to-definition call replaces a grep followed by reading several candidate files.</li>
+</ul>
+
+<h2 id="junk">6. Stop Claude reading files it can't use</h2>
+<p>Most guides skip this one. Lockfiles, snapshots, generated code, minified bundles, fixtures and large data files cost tokens whenever a search or a read lands in them, and they teach the model nothing about your code.</p>
+<p class="callout">A <code>.claudeignore</code> file does nothing. Claude Code doesn't read it. The supported mechanism is a <code>Read</code> deny rule in <code>.claude/settings.json</code>.</p>
+<pre><code>{
+  "permissions": {
+    "deny": [
+      "Read(package-lock.json)",
+      "Read(dist/**)",
+      "Read(tests/__snapshots__/**)"
+    ]
+  }
+}</code></pre>
+<p>Rules use gitignore syntax. A bare filename such as <code>package-lock.json</code> matches at any depth, and a single-directory deny pattern such as <code>dist/**</code> also matches nested copies. Claude Code applies <code>Read</code> rules to its file tools, to Grep and Glob, and to @-mentions on a best-effort basis, and to shell commands it recognizes, such as <code>cat</code> and <code>head</code>. They don't stop a recursive <code>grep -r</code> or a script that opens files itself; the <a href="https://code.claude.com/docs/en/sandboxing">sandbox</a> covers that.</p>
+
+<h3>Which files? Measure instead of guessing</h3>
+<p><a href="./">ctxray</a> walks a repo the way an agent would, counts every file in tokens and flags the ones an agent can't use. On fresh shallow clones of six popular repos (12 and 13 Nov 2026):</p>
+<table>
+<thead><tr><th>Repo</th><th class="n">Tokens</th><th class="n">Flagged</th><th>Biggest single source</th></tr></thead>
+<tbody>
+<tr><td>langchain</td><td class="n">9.82M</td><td class="n">55%</td><td>22 <code>uv.lock</code> files, 5.11M tokens</td></tr>
+<tr><td>ollama</td><td class="n">9.26M</td><td class="n">51%</td><td><code>shakespeare.txt</code> test data, 1.33M tokens</td></tr>
+<tr><td>excalidraw</td><td class="n">4.50M</td><td class="n">54%</td><td>a wasm wrapper and a font source file, ~590k</td></tr>
+<tr><td>fastapi</td><td class="n">8.47M</td><td class="n">43%</td><td>one drawio SVG, 631k tokens</td></tr>
+<tr><td>shadcn/ui</td><td class="n">7.79M</td><td class="n">38%</td><td>22 lockfiles, 813k tokens</td></tr>
+<tr><td>express</td><td class="n">196k</td><td class="n">~0%</td><td>nothing worth flagging</td></tr>
+</tbody></table>
+<p>These are whole-repo totals, so treat them as an upper bound: no agent reads everything. They show where a stray search or read is expensive.</p>
+<p>Run it, review the <code>.agentignore</code> it writes, then turn that file into deny rules:</p>
+<pre><code>npx github:geraltbhai/ctxray         # breakdown by file and category
+npx github:geraltbhai/ctxray init    # writes .agentignore and an AGENTS.md scaffold
+
+# .agentignore uses gitignore syntax, so each line maps to a Read deny rule
+grep -vE '^[[:space:]]*(#|$)' .agentignore \
+  | sed -E 's#/$#/**#; s#.*#Read(&amp;)#' \
+  | jq -R . | jq -s '{permissions:{deny:.}}'</code></pre>
+<p>Merge the output into <code>.claude/settings.json</code>; deny lists from different settings files combine, so existing rules stay. On shadcn/ui this produced 144 rules covering 2.85M tokens, 37% of the repo. Read the list before you commit it: anything you actually want Claude to see must not be on it, and paths containing brackets or parentheses, such as Next.js route groups, are worth a second look.</p>
+
+<h2 id="prompts">7. Ask precisely, plan first</h2>
+<ul>
+<li>"Improve this codebase" makes Claude scan widely. "Add input validation to <code>login()</code> in <code>auth.ts</code>" lets it read two files.</li>
+<li>For bigger changes, press Shift+Tab into plan mode so the approach is agreed before any code is written. If it heads the wrong way, press Esc early, and use <code>/rewind</code> to go back to a checkpoint.</li>
+<li>Give Claude a way to check its own work, such as a test or an expected output, so mistakes get caught before another round trip.</li>
+</ul>
+
+<h2 id="measure">8. Measure what changed</h2>
+<ul>
+<li><code>/usage</code> shows session tokens and estimated cost, plus a prompt-cache line with hit rate and misses. On Pro, Max, Team and Enterprise it also breaks recent usage down by skill, subagent, plugin and MCP server, with recommendations; in recent versions, pressing <code>f</code> applies the ones it can.</li>
+<li><code>/context</code> shows what is filling the window right now.</li>
+<li><code>/insights</code> writes a report on how you work across recent sessions.</li>
+<li>Re-run <code>ctxray</code> after adding rules. It reads <code>.agentignore</code> back, so you can watch the flagged total drop.</li>
+</ul>
+
+<h2 id="sources">Sources</h2>
+<ul class="src">
+<li><a href="https://code.claude.com/docs/en/costs">Claude Code docs: Manage costs effectively</a></li>
+<li><a href="https://code.claude.com/docs/en/permissions">Claude Code docs: Configure permissions (Read rules, path patterns)</a></li>
+<li><a href="https://code.claude.com/docs/en/settings">Claude Code docs: Settings files and precedence</a></li>
+<li><a href="https://platform.claude.com/docs/en/about-claude/pricing">Claude API pricing</a></li>
+<li><a href="https://github.com/geraltbhai/ctxray">ctxray on GitHub</a> (MIT; the token estimator's calibration script is in the repo)</li>
+</ul>
+</main>
+
+<footer><span>ctxray · MIT · built by <a href="https://eigensys-website.vercel.app/">EigenSys</a></span><span><a href="https://github.com/geraltbhai/ctxray">source</a> · <a href="https://github.com/geraltbhai/ctxray/issues">issues</a></span></footer>
+</div>
+</body>
+</html>
