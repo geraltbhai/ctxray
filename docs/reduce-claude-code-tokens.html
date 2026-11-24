@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How to reduce Claude Code token usage (November 2026) · ctxray</title>
-<meta name="description" content="What actually shrinks a Claude Code bill: clearing and compacting, model and effort choice, a small CLAUDE.md, subagents and hooks for noisy output, and Read deny rules that keep lockfiles and fixtures out of context.">
+<meta name="description" content="Cut Claude Code token usage: clear vs compact, model and effort choice, a short CLAUDE.md, and Read deny rules that keep lockfiles out of context.">
 <link rel="canonical" href="https://geraltbhai.github.io/ctxray/reduce-claude-code-tokens.html">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta property="og:title" content="How to reduce Claude Code token usage">
@@ -14,7 +14,8 @@
 <meta property="og:image" content="https://geraltbhai.github.io/ctxray/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://geraltbhai.github.io/ctxray/og.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"How to reduce Claude Code token usage","datePublished":"2026-11-17","dateModified":"2026-11-17","author":{"@type":"Organization","name":"EigenSys"},"about":"Claude Code token usage and cost"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"How to reduce Claude Code token usage","datePublished":"2026-11-17","dateModified":"2026-11-24","author":{"@type":"Organization","name":"EigenSys"},"about":"Claude Code token usage and cost"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How much does Claude Code cost per day?", "acceptedAnswer": {"@type": "Answer", "text": "Anthropic reports an average of about $13 per developer per active day across enterprise deployments, with 90% of users under $30. Your number depends mostly on how much context each request carries."}}, {"@type": "Question", "name": "Does .claudeignore work?", "acceptedAnswer": {"@type": "Answer", "text": "No. Claude Code doesn't read a .claudeignore file. To keep lockfiles, builds and fixtures out of context, add Read deny rules under permissions.deny in .claude/settings.json (step 6)."}}, {"@type": "Question", "name": "Do @imports in CLAUDE.md save tokens?", "acceptedAnswer": {"@type": "Answer", "text": "No. Imported files load at launch together with CLAUDE.md. What does load on demand: rules in .claude/rules with a paths: frontmatter, CLAUDE.md files in subfolders, and skills (step 4)."}}, {"@type": "Question", "name": "Is /clear or /compact cheaper?", "acceptedAnswer": {"@type": "Answer", "text": "/clear costs nothing: it just starts fresh. /compact has to read the whole conversation to summarise it, so it is a large request in itself. Clear between unrelated tasks; compact once, deliberately, when you need continuity (step 2)."}}, {"@type": "Question", "name": "Can I turn extended thinking off to save tokens?", "acceptedAnswer": {"@type": "Answer", "text": "Thinking is billed as output tokens. On the current 5.5 and Fable models it can't be switched off completely, but /effort lowers how much the model thinks (step 3)."}}, {"@type": "Question", "name": "Does Haiku cost the same for long prompts?", "acceptedAnswer": {"@type": "Answer", "text": "No. Haiku 5.5 costs $0.10 per million input tokens up to a 100k-token prompt and $0.50 above it, so a Haiku subagent that reads a lot can lose its price advantage. Keep Haiku jobs small (step 3)."}}]}</script>
 <style>:root{--bg:#0d0f0e;--panel:#141816;--line:#252b28;--ink:#e6ebe7;--dim:#8b958f;--sig:#7ee0a1;--waste:#f0705a;--warn:#e9c46a;--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;--sans:"Inter","Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -69,7 +70,7 @@ th.n{text-align:right}
 <main class="doc">
 <p class="kicker">Guide · checked against the Claude Code docs, 17 Nov 2026</p>
 <h1>How to reduce Claude Code token usage</h1>
-<p class="lede">Claude Code sends your whole conversation with every request, so most of what you pay for is context, not the prompt you just typed. These are the changes that actually shrink it, roughly in order of impact, with the command or setting for each.</p>
+<p class="lede">Claude Code sends your whole conversation with every request, so most of what you pay for is context, not the prompt you just typed. These are the changes that actually shrink it, roughly in order of impact, with the command or setting for each. To see which files in your repo an agent can't use, run the free <a href="./">ctxray</a> scan (step 6).</p>
 
 <nav class="toc" aria-label="Contents"><strong>Contents</strong>
 <ol>
@@ -81,7 +82,8 @@ th.n{text-align:right}
 <li><a href="#junk">Stop Claude reading files it can't use</a></li>
 <li><a href="#prompts">Ask precisely, plan first</a></li>
 <li><a href="#measure">Measure what changed</a></li>
-</ol></nav>
+</ol>
+<p style="margin:10px 0 0"><a href="#faq">FAQ</a></p></nav>
 
 <h2 id="where">1. Where the tokens go</h2>
 <p>Every request carries the full conversation: CLAUDE.md, every file Claude has read, every tool result and every message. Each tool call is another request carrying that history again. Prompt caching makes the repeated part much cheaper, but not free, so a one-line question at the end of a long session still pays to re-read everything before it. After a break longer than the cache lifetime, the first message misses the cache and pays full price for the whole context.</p>
@@ -172,6 +174,21 @@ grep -vE '^[[:space:]]*(#|$)' .agentignore \
 <li><code>/insights</code> writes a report on how you work across recent sessions.</li>
 <li>Re-run <code>ctxray</code> after adding rules. It reads <code>.agentignore</code> back, so you can watch the flagged total drop.</li>
 </ul>
+
+
+<h2 id="faq">FAQ</h2>
+<h3>How much does Claude Code cost per day?</h3>
+<p>Anthropic reports an average of about $13 per developer per active day across enterprise deployments, with 90% of users under $30. Your number depends mostly on how much context each request carries.</p>
+<h3>Does .claudeignore work?</h3>
+<p>No. Claude Code doesn&#x27;t read a .claudeignore file. To keep lockfiles, builds and fixtures out of context, add Read deny rules under permissions.deny in .claude/settings.json (step 6).</p>
+<h3>Do @imports in CLAUDE.md save tokens?</h3>
+<p>No. Imported files load at launch together with CLAUDE.md. What does load on demand: rules in .claude/rules with a paths: frontmatter, CLAUDE.md files in subfolders, and skills (step 4).</p>
+<h3>Is /clear or /compact cheaper?</h3>
+<p>/clear costs nothing: it just starts fresh. /compact has to read the whole conversation to summarise it, so it is a large request in itself. Clear between unrelated tasks; compact once, deliberately, when you need continuity (step 2).</p>
+<h3>Can I turn extended thinking off to save tokens?</h3>
+<p>Thinking is billed as output tokens. On the current 5.5 and Fable models it can&#x27;t be switched off completely, but /effort lowers how much the model thinks (step 3).</p>
+<h3>Does Haiku cost the same for long prompts?</h3>
+<p>No. Haiku 5.5 costs $0.10 per million input tokens up to a 100k-token prompt and $0.50 above it, so a Haiku subagent that reads a lot can lose its price advantage. Keep Haiku jobs small (step 3).</p>
 
 <h2 id="sources">Sources</h2>
 <ul class="src">
